@@ -1,0 +1,17 @@
+.hero {
+    text-align: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #6b73ff, #000dff);
+    color: white;
+}
+
+.featured-books {
+    padding: 2rem;
+    background-color: #f4f4f4;
+}
+
+.book-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
