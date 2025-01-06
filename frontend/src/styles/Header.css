@@ -13,7 +13,7 @@
 
 /* Logo Styles */
 .logo img {
-  width: 120px;
+  width: 150px;
   height: auto;
 }
 
@@ -58,22 +58,91 @@
 
 /* User Icon */
 .user-icon {
+  font-size: 1.8rem;
+  color: #333;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.book-icon {
   font-size: 1.5rem;
   color: #333;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.book-icon :hover {
+  color: #006400;
 }
 
 .user-icon:hover {
   color: #006400;
 }
 
-/* Book Icon */
-.book-icon {
-  font-size: 1.5rem;
-  color: #333;
-  margin-right: 1rem;
-  cursor: pointer;
+/* Sidebar Styles */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  height: 100%;
+  width: 300px;
+  background-color: white;
+  box-shadow: -4px 0 8px rgba(0, 0, 0, 0.2);
+  padding: 2rem;
+  transition: all 0.3s ease-in-out;
+  z-index: 1100;
 }
 
-.book-icon:hover {
+.sidebar.show {
+  right: 0;
+}
+
+.sidebar h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.sidebar .menu-button {
+  display: block;
+  margin: 1rem 0;
+  padding: 0.8rem 1.5rem;
+  background-color: #006400;
+  color: white;
+  text-decoration: none;
+  text-align: center;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.sidebar .menu-button:hover {
+  background-color: #004c00;
+}
+
+/* Close Button */
+.close-button {
+  font-size: 2rem;
+  color: #333;
+  border: none;
+  background: none;
+  cursor: pointer;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.close-button:hover {
   color: #006400;
+}
+
+/* Overlay */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
 }
