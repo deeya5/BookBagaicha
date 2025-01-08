@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom"; // Import Link
 import "../styles/Signup.css";
 import logo from "../assets/logo.png"; // Import the logo
+const API_URL = "http://127.0.0.1:5000/api/users/signup";
 
 const Signup = () => {
   return (
