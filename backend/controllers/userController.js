@@ -1,6 +1,9 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const express = require("express"); // Move this to the top
+
+// Remove `router.post(...)` from here
 
 // Signup Controller
 const signupUser = async (req, res) => {
@@ -45,4 +48,5 @@ const loginUser = async (req, res) => {
   }
 };
 
+// Only export the controller functions, not `router`
 module.exports = { signupUser, loginUser };

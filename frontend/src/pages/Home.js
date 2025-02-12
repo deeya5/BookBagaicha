@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/Home.css";
 import BookCard from "../components/BookCard";
 import romanceImage from "../assets/romance.jpg";
@@ -9,6 +10,7 @@ import book2Image from "../assets/book.jpg";
 import book3Image from "../assets/book.jpg";
 
 const Home = () => {
+  const navigate = useNavigate();
   const genres = [
     { name: "Fantasy", image: fantasyImage },
     { name: "Fiction", image: fictionImage },
@@ -40,7 +42,9 @@ const Home = () => {
             BookBagaicha presents new releases for you to explore and enjoy.
             Dive into the books of your choice.
           </p>
-          <button className="explore-button">Explore</button>
+          <button className="explore-button" onClick={() => navigate("/explore")}>
+      Explore
+    </button>
         </div>
       </section>
 

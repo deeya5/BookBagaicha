@@ -4,6 +4,7 @@ import Header from "./components/Header";
 import Home from "./pages/Home";
 import Signup from "./pages/Signup"; 
 import Login from "./pages/Login";
+import explore from "./pages/explore"
 
 const Layout = ({ children }) => {
   const location = useLocation();
@@ -27,6 +28,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Signup />} /> {/* Signup Route */}
           <Route path="/login" element={<Login />} /> {/* Login Route */}
+          <Route path="/explore" element={<explore />} />
         </Routes>
       </Layout>
     </Router>
