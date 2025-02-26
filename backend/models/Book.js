@@ -1,19 +1,26 @@
-// models/Book.js
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-// Define the schema for the Book model
-const bookSchema = new mongoose.Schema({
-  title: { type: String, required: true },  // The name of the book
-  author: { type: String, required: true },  // The author of the book
-  genre: { 
-    type: String, 
-    required: true, 
-    enum: ['romance', 'fiction', 'fantasy'],  // Define allowed genres
-  },
-  picture: { type: String, required: true },  // The URL or path to the book picture
+const book = new mongoose.Schema({
+   url: {
+    type: String,
+    required: true,
+   },
+   title: {
+    type: String,
+    required: true,
+   },
+   author: {
+    type: String,
+    required: true,
+   },
+   genre: {
+    type: String,
+    required: true,
+   },
+   desc: {
+    type: String,
+    required: true,
+   },
+    
 });
-
-// Create the Book model using the schema
-const Book = mongoose.model('Book', bookSchema);
-
-module.exports = Book;
+module.exports = mongoose.model("book", book);
