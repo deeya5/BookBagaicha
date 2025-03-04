@@ -5,6 +5,7 @@ require ("dotenv").config();
 require("./conn/conn");
 const user = require("./routes/user");
 const books = require("./routes/book");
+const favourite = require("./routes/favourite");
 
 // app.get("/",(req,res) => {
 //     res.send("Hello from BookBagaicha");
@@ -13,6 +14,7 @@ const books = require("./routes/book");
 //routes
 app.use("/api/v1",user);
 app.use("/api/v1",books);
+app.use("/api/v1",favourite);
 
 //creating port
 app.listen(process.env.PORT, () => {

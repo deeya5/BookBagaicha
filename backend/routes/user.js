@@ -42,7 +42,8 @@ router.post("/sign-up", async (req, res) => {
         await newUser.save();
         return res.status(200).json({message: "SignUP Successful"});
 
-    }catch(error){
+    }catch(error)
+    {
             res.status(500).json({message: "Internal server error"});
         }
     
