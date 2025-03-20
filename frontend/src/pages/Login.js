@@ -20,9 +20,9 @@ const Login = () => {
       );
 
       if (response.status === 200) {
-        alert("Login successful!");
-        localStorage.setItem("token", response.data.token); // Store token
-        navigate("/"); // Redirect to homepage
+        // alert("Login successful!");
+        localStorage.setItem("token", response.data.token); // Stores token
+        navigate("/"); // Redirects to homepage
       }
     } catch (error) {
       console.error("Error during login:", error);

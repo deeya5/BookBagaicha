@@ -51,48 +51,32 @@ router.post("/sign-up", async (req, res) => {
 
 //Login or Signin
 router.post("/sign-in", async (req, res) => {
-    try{
-        const {username, password}= req.body;
+    try {
+        const { email, password } = req.body;
 
-        const existingUser = await User.findOne({username});
-        if (!existingUser){
-            res.status(400).json({message: "Invalid credentials"});
+        // Check if user exists
+        const existingUser = await User.findOne({ email });
+        if (!existingUser) {
+            return res.status(400).json({ message: "Invalid credentials" });
         }
 
-        await bcrypt.compare(password,existingUser.password, (err, data) => {
-            if (data){
-                const authClaims = [
-                    {name:existingUser.username},
-                    {role:existingUser.role },
-                ]
-
-                const token = jwt.sign({authClaims},"bookbagaicha5",{
-                    expiresIn: "30d",})
-                res.status(200).json({
-                    id:existingUser.id, 
-                    role: existingUser.role, 
-                    token: token, });
-            }
-            else{
-                res.status(400).json({message: "Invalid credentials"});
-            }
-        });
-
-    }catch(error){
-            res.status(500).json({message: "Internal server error"});
+        // Compare passwords
+        const isPasswordValid = await bcrypt.compare(password, existingUser.password);
+        if (!isPasswordValid) {
+            return res.status(400).json({ message: "Invalid credentials" });
         }
-    
-});
 
-//get user information
-router.get("/get-user-information", authenticateToken, async (req, res) => {
-    try{
-        const { id } = req.headers;
-        const data = await User.findById(id).select('-password');
-        return res.status(200).json(data);
-    } catch(error){
-        res.status(500).json({ message: "Internal server error"});
+        // Generate JWT token
+        const authClaims = { name: existingUser.email, role: existingUser.role };
+        const token = jwt.sign(authClaims, "bookbagaicha5", { expiresIn: "30d" });
+
+        return res.status(200).json({ id: existingUser.id, role: existingUser.role, token });
+
+    } catch (error) {
+        console.error("Login error:", error);
+        return res.status(500).json({ message: "Internal server error" });
     }
 });
+
 
 module.exports = router;

@@ -27,6 +27,7 @@ const favourite = require("./routes/favourite");
 app.use("/api/v1", user);
 app.use("/api/v1", books);
 app.use("/api/v1", favourite);
+app.use("/api/auth", authRoutes); 
 
 // Handle invalid routes (404 error)
 app.use((req, res, next) => {

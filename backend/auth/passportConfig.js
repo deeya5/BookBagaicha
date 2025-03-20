@@ -13,6 +13,7 @@ passport.use(new LocalStrategy(
       }
       return done(null, user);
     } catch (error) {
+
       return done(error);
     }
   }
@@ -24,6 +25,7 @@ passport.use(new GoogleStrategy({
     clientSecret: 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,
     callbackURL: "http://localhost:3000/auth/google/callback"
   },
+  
   async (token, tokenSecret, profile, done) => {
     try {
       let user = await User.findOne({ googleId: profile.id });
