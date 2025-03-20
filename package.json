@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@tailwindcss/postcss": "^4.0.14",
     "react-scripts": "^5.0.1"
   }
 }

@@ -9,7 +9,7 @@ const Explore = () => {
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const response = await axios.get("http://127.0.0.1:5000/api/books");
+        const response = await axios.get("https://localhost:3000/api/v1/get-recent-books");
         const categorizedBooks = response.data.reduce((acc, book) => {
           const { genre } = book;
           if (!acc[genre]) {

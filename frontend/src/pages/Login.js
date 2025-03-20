@@ -1,27 +1,27 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom"; // Import Link and useNavigate
-import axios from "axios"; // Import axios for API requests
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 import "../styles/Login.css";
-import logo from "../assets/logo.png"; // Import the logo
+import logo from "../assets/logo.png";
 
 const Login = () => {
-  const [email, setEmail] = useState(""); // State for email
-  const [password, setPassword] = useState(""); // State for password
-  const [error, setError] = useState(""); // State for error messages
-  const navigate = useNavigate(); // For navigating after login
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent form reload
+    e.preventDefault();
 
     try {
-      const response = await axios.post("http://127.0.0.1:5000/api/users/login", {
-        email,
-        password,
-      });
+      const response = await axios.post(
+        "http://localhost:1000/api/v1/sign-in",
+        { email, password }
+      );
 
       if (response.status === 200) {
         alert("Login successful!");
-        localStorage.setItem("token", response.data.token); // Save token in localStorage
+        localStorage.setItem("token", response.data.token); // Store token
         navigate("/"); // Redirect to homepage
       }
     } catch (error) {
@@ -58,7 +58,7 @@ const Login = () => {
           {error && <p className="error-message">{error}</p>}
         </form>
         <p className="signup-link">
-          Don't have an account? <a href="/signup">Signup</a>
+          Don't have an account? <Link to="/signup">Signup</Link>
         </p>
       </div>
     </div>

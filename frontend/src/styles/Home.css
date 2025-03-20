@@ -3,9 +3,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #f5f5f5;
+    background-color:rgb(252, 254, 252);
     padding: 2rem;
-    margin-bottom: 2rem;
+    margin-bottom: 0.0001rem;
   }
   
   .hero-content {
@@ -52,7 +52,8 @@
   /* Genre Section */
   .genres {
     text-align: center;
-    padding: 2rem;
+    padding: 1rem;
+    padding-top: 0rem;
   }
   
   .genres h2 {
