@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const cors = require('cors'); // Import CORS
+const passport = require("passport");
 const dotenv = require("dotenv");
 
 // Load environment variables from the .env file
@@ -22,12 +23,15 @@ require("./conn/conn"); // Ensure this contains your database connection logic
 const user = require("./routes/user");
 const books = require("./routes/book");
 const favourite = require("./routes/favourite");
+const authRoutes = require("./routes/auth");
+
 
 // Use routes
 app.use("/api/v1", user);
 app.use("/api/v1", books);
 app.use("/api/v1", favourite);
 app.use("/api/auth", authRoutes); 
+
 
 // Handle invalid routes (404 error)
 app.use((req, res, next) => {

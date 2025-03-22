@@ -24,8 +24,8 @@ router.use(passport.session());
 passport.use(
   new GoogleStrategy(
     {
-      clientID: 348570826422-d2e2vu9aelj6mgoes5ipcvisvl08uhva.apps.googleusercontent.com,
-      clientSecret: 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,
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: "http://localhost:3000/api/auth/google/callback",
     },
     async (accessToken, refreshToken, profile, done) => {
