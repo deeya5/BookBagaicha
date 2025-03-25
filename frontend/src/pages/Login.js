@@ -20,9 +20,17 @@ const Login = () => {
       );
 
       if (response.status === 200) {
-        // alert("Login successful!");
-        localStorage.setItem("token", response.data.token); // Stores token
-        navigate("/"); // Redirects to homepage
+        // Store the token in localStorage
+        // After successful login, store username in localStorage
+        localStorage.setItem("username", response.data.username);
+        localStorage.setItem("authToken", response.data.token);
+        window.dispatchEvent(new Event("storage")); // Force UI update
+
+
+        // Optionally set the username to the state if needed (could also directly use localStorage in Header.js)
+        // setUserName(response.data.username);
+
+        navigate("/"); // Redirects to homepage or any page you prefer
       }
     } catch (error) {
       console.error("Error during login:", error);

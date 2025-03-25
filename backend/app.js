@@ -3,6 +3,7 @@ const app = express();
 const cors = require('cors'); // Import CORS
 const passport = require("passport");
 const dotenv = require("dotenv");
+const session = require("express-session");
 
 // Load environment variables from the .env file
 dotenv.config();
@@ -12,9 +13,10 @@ app.use(express.json());
 
 // Enable CORS for all routes
 app.use(cors({
-  origin: 'http://localhost:3000', // Allow requests from this origin
-  credentials: true, // Allow cookies and credentials
-}));
+    origin: "http://localhost:3000",
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"], // Allow auth header
+  }));
 
 // Database connection
 require("./conn/conn"); // Ensure this contains your database connection logic
@@ -25,13 +27,11 @@ const books = require("./routes/book");
 const favourite = require("./routes/favourite");
 const authRoutes = require("./routes/auth");
 
-
 // Use routes
 app.use("/api/v1", user);
 app.use("/api/v1", books);
 app.use("/api/v1", favourite);
 app.use("/api/auth", authRoutes); 
-
 
 // Handle invalid routes (404 error)
 app.use((req, res, next) => {
