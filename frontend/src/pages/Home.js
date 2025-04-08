@@ -1,33 +1,45 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import "../styles/Home.css";
 import BookCard from "../components/BookCard";
 import romanceImage from "../assets/romance.jpg";
 import fantasyImage from "../assets/fantasy.jpg";
 import fictionImage from "../assets/romance.jpg";
-import book1Image from "../assets/book.jpg";
-import book2Image from "../assets/book.jpg";
-import book3Image from "../assets/book.jpg";
+import adventureImage from "../assets/fantasy.jpg"; // Add more as needed
+
+const genreImages = {
+  Fantasy: fantasyImage,
+  Fiction: fictionImage,
+  Romance: romanceImage,
+  Adventure: adventureImage,
+};
 
 const Home = () => {
   const navigate = useNavigate();
-  const genres = [
-    { name: "Fantasy", image: fantasyImage },
-    { name: "Fiction", image: fictionImage },
-    { name: "Romance", image: romanceImage },
-  ];
-
   const [featuredBooks, setFeaturedBooks] = useState([]);
+  const [genres, setGenres] = useState([]);
+  const [error, setError] = useState("");
+  const [isLoadingGenres, setIsLoadingGenres] = useState(true);
 
   useEffect(() => {
-    const fetchFeaturedBooks = () => {
-      const data = [
-        { id: 1, title: "Book 1", author: "Author 1", coverImage: book1Image },
-        { id: 2, title: "Book 2", author: "Author 2", coverImage: book2Image },
-        { id: 3, title: "Book 3", author: "Author 3", coverImage: book3Image },
-      ];
-      setFeaturedBooks(data);
+    const fetchFeaturedBooks = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get("http://localhost:1000/api/v1/get-recent-books", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setFeaturedBooks(response.data.data);
+      } catch (error) {
+        console.error("Error fetching featured books:", error);
+        setError("Failed to load featured books.");
+      }
     };
+
+    const storedTopGenres = JSON.parse(localStorage.getItem("topGenres")) || [];
+    const genreObjects = storedTopGenres.map((name) => ({ name }));
+    setGenres(genreObjects);
+    setIsLoadingGenres(false);
 
     fetchFeaturedBooks();
   }, []);
@@ -43,8 +55,8 @@ const Home = () => {
             Dive into the books of your choice.
           </p>
           <button className="explore-button" onClick={() => navigate("/explore")}>
-      Explore
-    </button>
+            Explore
+          </button>
         </div>
       </section>
 
@@ -53,12 +65,22 @@ const Home = () => {
         <h2>Browse The Genre</h2>
         <p>Dive into what you're into.</p>
         <div className="genre-grid">
-          {genres.map((genre, index) => (
-            <div key={index} className="genre-card">
-              <img src={genre.image} alt={genre.name} />
-              <h3>{genre.name}</h3>
-            </div>
-          ))}
+          {isLoadingGenres ? (
+            <div className="spinner"></div>
+          ) : genres.length > 0 ? (
+            genres.map((genre) => (
+              <div
+                key={genre.name}
+                className="genre-card"
+                onClick={() => navigate(`/genre#${genre.name.toLowerCase()}`)}
+              >
+                <img src={genreImages[genre.name] || romanceImage} alt={genre.name} />
+                <h3>{genre.name}</h3>
+              </div>
+            ))
+          ) : (
+            <p>No genres available.</p>
+          )}
         </div>
         <button className="show-more-button">Show More</button>
       </section>
@@ -66,10 +88,15 @@ const Home = () => {
       {/* Featured Books Section */}
       <section className="featured-books">
         <h2>Featured Books</h2>
+        {error && <p className="error-message">{error}</p>}
         <div className="book-row">
-          {featuredBooks.map((book) => (
-            <BookCard key={book.id} book={book} />
-          ))}
+          {featuredBooks.length > 0 ? (
+            featuredBooks.map((book) => (
+              <BookCard key={book._id} book={{ ...book, coverImage: book.url }} />
+            ))
+          ) : (
+            <p>Loading featured books...</p>
+          )}
         </div>
       </section>
     </div>

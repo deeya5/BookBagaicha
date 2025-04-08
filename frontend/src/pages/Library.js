@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import "../styles/library.css"; // Add styling for library page
+import "../styles/library.css";
+import { FaTrash } from "react-icons/fa";
 
 const Library = () => {
-  const [books, setBooks] = useState([]);
+  const [currentReads, setCurrentReads] = useState([]);
+  const [libraryBooks, setLibraryBooks] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchLibraryBooks = async () => {
+    const fetchBooks = async () => {
       try {
         const response = await axios.get("https://localhost:3000/api/v1/get-recent-books");
-        setBooks(response.data);
+        const books = response.data;
+        setCurrentReads(books.filter(book => book.currentlyReading));
+        setLibraryBooks(books);
       } catch (error) {
         console.error("Error fetching library books:", error);
         setError("Failed to load your library.");
@@ -20,28 +24,50 @@ const Library = () => {
       }
     };
 
-    fetchLibraryBooks();
+    fetchBooks();
   }, []);
 
   return (
     <div className="library-container">
-      <h1>Your Library</h1>
       {error && <p className="error-message">{error}</p>}
       {loading ? (
         <p>Loading your books...</p>
-      ) : books.length > 0 ? (
-        <div className="books-grid">
-          {books.map((book) => (
-            <div key={book.id} className="book-card">
-              <img src={book.coverImage} alt={book.title} className="book-cover" />
-              <h3>{book.title}</h3>
-              <p>by {book.author}</p>
-              <button className="read-button">Read Now</button>
-            </div>
-          ))}
-        </div>
       ) : (
-        <p>Your library is empty. Start adding books!</p>
+        <>
+          {/* Current Reads Section */}
+          <div className="section">
+            <div className="section-header">Current Reads</div>
+            <div className="books-list">
+              {currentReads.map((book) => (
+                <div key={book.id} className="book-item">
+                  <img src={book.coverImage} alt={book.title} className="book-cover" />
+                  <div className="book-info">
+                    <p className="book-title">{book.title}</p>
+                    <FaTrash className="delete-icon" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <hr className="divider" />
+          
+          {/* Added to Library Section */}
+          <div className="section">
+            <div className="section-header">Added to library</div>
+            <div className="books-list">
+              {libraryBooks.map((book) => (
+                <div key={book.id} className="book-item">
+                  <img src={book.coverImage} alt={book.title} className="book-cover" />
+                  <div className="book-info">
+                    <p className="book-title">{book.title}</p>
+                    <FaTrash className="delete-icon" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

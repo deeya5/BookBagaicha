@@ -1,50 +1,57 @@
 const express = require("express");
 const app = express();
-const cors = require('cors'); // Import CORS
-const passport = require("passport");
+const cors = require("cors");
 const dotenv = require("dotenv");
-const session = require("express-session");
 
-// Load environment variables from the .env file
+// Load environment variables
 dotenv.config();
 
-// Middleware to parse incoming requests as JSON
+// Middleware
 app.use(express.json());
-
-// Enable CORS for all routes
-app.use(cors({
+app.use(
+  cors({
     origin: "http://localhost:3000",
     credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"], // Allow auth header
-  }));
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 // Database connection
-require("./conn/conn"); // Ensure this contains your database connection logic
+require("./conn/conn");
 
 // Routes
-const user = require("./routes/user");
-const books = require("./routes/book");
-const favourite = require("./routes/favourite");
+const userRoutes = require("./routes/user");
+const bookRoutes = require("./routes/book");
+const favouriteRoutes = require("./routes/favourite");
 const authRoutes = require("./routes/auth");
+const uploadRoutes = require("./routes/upload");
+const genreRoutes = require("./routes/genre");
 
 // Use routes
-app.use("/api/v1", user);
-app.use("/api/v1", books);
-app.use("/api/v1", favourite);
-app.use("/api/auth", authRoutes); 
+app.use("/api/v1", userRoutes);
+app.use("/api/v1", bookRoutes);
+app.use("/api/v1", favouriteRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/uploads", express.static("uploads"));
+app.use("/api/v1", uploadRoutes);
+app.use("/api/v1", genreRoutes);
+
+// Debugging Log to check if user routes are loaded
+console.log("✅ User routes loaded successfully!");
 
 // Handle invalid routes (404 error)
-app.use((req, res, next) => {
-    res.status(404).json({ message: "Route not found" });
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ message: "Internal Server Error" });
+  console.error("❌ Server Error:", err.stack);
+  res.status(500).json({ message: "Internal Server Error" });
 });
 
 // Start the server
-app.listen(process.env.PORT || 1000, () => {
-    console.log(`Server started on port ${process.env.PORT || 1000}`);
+const PORT = process.env.PORT || 1000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server started on port ${PORT}`);
 });

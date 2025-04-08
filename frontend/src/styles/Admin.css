@@ -1,0 +1,212 @@
+/* Admin Dashboard Styles - Book Bagaicha Theme */
+.admin-container {
+  display: flex;
+  height: 100vh;
+  background-color: #fdf7e3; /* Warm, bookish background */
+}
+
+/* Sidebar Styling */
+.admin-sidebar {
+  width: 260px;
+  background: rgb(55, 90, 64); /* Earthy green */
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.admin-profile {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.admin-avatar {
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+  border: 3px solid #f4e1c1; /* Warm highlight */
+}
+
+.online-status {
+  color: #a3e635;
+  font-size: 14px;
+}
+
+/* Navigation Buttons */
+.admin-nav {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+}
+
+.admin-nav button {
+  background: none;
+  border: none;
+  color: rgb(250, 253, 247);
+  padding: 12px;
+  padding-left: 35px;
+  text-align: left;
+  font-size: 16px;
+  font-weight: bold;
+  display: block;
+  cursor: pointer;
+  transition: 0.3s;
+  width: 100%;
+}
+
+.admin-nav button:hover,
+.admin-nav .active {
+  background: #2c4020; /* Darker shade for hover */
+  color: #fff;
+  border-left: 4px solid #ffb703; /* Warm highlight */
+}
+
+/* Main Content Styling */
+.admin-content {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.admin-logo {
+  width: 160px;
+}
+
+.admin-info {
+  font-size: 18px;
+  font-weight: bold;
+  color: #3b5323;
+}
+
+/* Dashboard Stats */
+.dashboard {
+  margin-top: 20px;
+}
+
+.dashboard h2 {
+  margin-bottom: 20px;
+  color: #3b5323;
+}
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.stat-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card h3 {
+  margin-bottom: 10px;
+  color: #3b5323;
+}
+
+.stat-card p {
+  font-size: 24px;
+  font-weight: bold;
+  color: #4a4a4a;
+}
+
+.users {
+  border-left: 5px solid #34a853;
+}
+
+.books {
+  border-left: 5px solid #f4a261;
+}
+
+.genres {
+  border-left: 5px solid #e63946;
+}
+
+/* Section Styling */
+.users-section,
+.authors-section,
+.books-section,
+.genres-section {
+  margin-top: 20px;
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.users-section h2,
+.authors-section h2,
+.books-section h2,
+.genres-section h2 {
+  color: #3b5323;
+  margin-bottom: 15px;
+}
+
+/* Table Styling */
+.users-table,
+.authors-table,
+.books-table,
+.genres-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.users-table th,
+.authors-table th,
+.books-table th,
+.genres-table th,
+.users-table td,
+.authors-table td,
+.books-table td,
+.genres-table td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+}
+
+.users-table th,
+.authors-table th,
+.books-table th,
+.genres-table th {
+  background-color: #3b5323;
+  color: white;
+}
+
+.users-table tr:nth-child(even),
+.authors-table tr:nth-child(even),
+.books-table tr:nth-child(even),
+.genres-table tr:nth-child(even) {
+  background-color: #f4e1c1;
+}
+
+.users-table tr:hover,
+.authors-table tr:hover,
+.books-table tr:hover,
+.genres-table tr:hover {
+  background-color: #e9cfa4;
+  transition: 0.3s;
+}
+
+/* Error Message Styling */
+.error-message {
+  color: #e63946;
+  font-weight: bold;
+  margin-top: 10px;
+}

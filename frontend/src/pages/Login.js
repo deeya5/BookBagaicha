@@ -12,31 +12,35 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     try {
       const response = await axios.post(
         "http://localhost:1000/api/v1/sign-in",
         { email, password }
       );
-
+  
       if (response.status === 200) {
-        // Store the token in localStorage
-        // After successful login, store username in localStorage
-        localStorage.setItem("username", response.data.username);
-        localStorage.setItem("authToken", response.data.token);
+        const { username, token, role } = response.data;
+  
+        // Store user details in localStorage
+        localStorage.setItem("username", username);
+        localStorage.setItem("authToken", token);
+        localStorage.setItem("userRole", role); // Store role
         window.dispatchEvent(new Event("storage")); // Force UI update
-
-
-        // Optionally set the username to the state if needed (could also directly use localStorage in Header.js)
-        // setUserName(response.data.username);
-
-        navigate("/"); // Redirects to homepage or any page you prefer
+  
+        // Redirect based on role
+        if (role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
       }
     } catch (error) {
       console.error("Error during login:", error);
       setError(error.response?.data?.message || "Invalid login credentials");
     }
   };
+  
 
   return (
     <div className="login-container">

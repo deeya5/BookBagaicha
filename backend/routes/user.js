@@ -5,24 +5,23 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { authenticateToken } = require("./userAuth");
 
-// SignUp Route
 router.post("/sign-up", async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const { username, email, password, role } = req.body; // ✅ Remove confirmPassword
 
         // Check username length
         if (username.length < 4) {
-            return res.status(400).json({ message: "Username length should be at least 4 characters!" });
+            return res.status(400).json({ message: "Username must be at least 4 characters long!" });
         }
 
         // Check if username already exists
-        const existingUsername = await User.findOne({ username: username });
+        const existingUsername = await User.findOne({ username });
         if (existingUsername) {
             return res.status(400).json({ message: "Username already exists!" });
         }
 
         // Check if email already exists
-        const existingEmail = await User.findOne({ email: email });
+        const existingEmail = await User.findOne({ email });
         if (existingEmail) {
             return res.status(400).json({ message: "Email already exists!" });
         }
@@ -36,18 +35,21 @@ router.post("/sign-up", async (req, res) => {
         const hashPass = await bcrypt.hash(password, 10);
 
         const newUser = new User({
-            username: username,
-            email: email,
+            username,
+            email,
             password: hashPass,
+            role,  // Ensure role is set correctly
         });
 
         await newUser.save();
         return res.status(200).json({ message: "SignUp Successful" });
 
     } catch (error) {
+        console.error("Signup error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 });
+
 
 // SignIn Route
 router.post("/sign-in", async (req, res) => {
@@ -94,6 +96,38 @@ router.get("/profile", authenticateToken, async (req, res) => {
         res.status(500).json({ message: "Server Error" });
     }
 });
+
+// Get total users
+router.get("/get-total-users", async (req, res) => {
+    try {
+      const userCount = await User.countDocuments();
+      res.status(200).json({ totalUsers: userCount });
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching user count" });
+    }
+  });
+
+  router.get("/users", async (req, res) => {
+    try {
+        const users = await User.find({}, "username email role"); // Fetch only necessary fields
+        res.status(200).json(users);
+    } catch (error) {
+        console.error("Error fetching users:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+  
+// Route to fetch users by role
+router.get('/users/role/:role', async (req, res) => {
+    const { role } = req.params;
+    try {
+      const users = await User.find({ role });  // MongoDB query to filter users by role
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch users by role' });
+    }
+  });
 
 // Export the router
 module.exports = router;

@@ -7,13 +7,19 @@ import Login from "./pages/Login";
 import Explore from "./pages/Explore";
 import Library from "./pages/Library"; 
 import Write from "./pages/Write"; 
-
+import Settings from "./pages/Settings";
+import Admin from "./pages/Admin";
+import Genre from "./pages/Genre";
+import BookDetail from "./pages/BookDetail";
 
 const Layout = ({ children }) => {
   const location = useLocation();
 
-  // Hide the header 
-  const showHeader = location.pathname !== "/signup" && location.pathname !== "/login";
+  //hiding the header component
+  const showHeader = location.pathname !== "/signup" && 
+  location.pathname !== "/login" && 
+  location.pathname !== "/admin";
+
 
   return (
     <>
@@ -34,6 +40,11 @@ function App() {
           <Route path="/explore" element={<Explore />} /> {/* Explore Route */}
           <Route path="/library" element={<Library />} /> {/* Library Route */}
           <Route path="/write" element={<Write />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/Admin" element={<Admin />} />
+          <Route path="/Genre" element={<Genre />} />
+          <Route path="/book/:id" element={<BookDetail />} />
+
         </Routes>
       </Layout>
     </Router>
