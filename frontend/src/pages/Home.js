@@ -2,11 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/Home.css";
-import BookCard from "../components/BookCard";
 import romanceImage from "../assets/romance.jpg";
 import fantasyImage from "../assets/fantasy.jpg";
 import fictionImage from "../assets/romance.jpg";
-import adventureImage from "../assets/fantasy.jpg"; // Add more as needed
+import adventureImage from "../assets/fantasy.jpg";
 
 const genreImages = {
   Fantasy: fantasyImage,
@@ -91,8 +90,21 @@ const Home = () => {
         {error && <p className="error-message">{error}</p>}
         <div className="book-row">
           {featuredBooks.length > 0 ? (
-            featuredBooks.map((book) => (
-              <BookCard key={book._id} book={{ ...book, coverImage: book.url }} />
+            featuredBooks.map((book, index) => (
+              <div
+                key={book._id || index}
+                className="book-card"
+                onClick={() => navigate(`/book/${book.id || book._id}`, { state: { book } })}
+              >
+              <img
+          className="book-image"
+          src={book.coverImage || "https://via.placeholder.com/150"}
+          alt={book.title}
+        />
+
+                <h3>{book.title}</h3>
+                <p>by {book.author}</p>
+              </div>
             ))
           ) : (
             <p>Loading featured books...</p>
