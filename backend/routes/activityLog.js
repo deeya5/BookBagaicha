@@ -7,7 +7,10 @@ module.exports = (authenticateToken) => {
   // Protected route
   router.get("/activity-log", authenticateToken, async (req, res) => {
     try {
-      const logs = await ActivityLog.find().sort({ timestamp: -1 }).limit(10);
+      const logs = await ActivityLog.find()
+  .sort({ timestamp: -1 })
+  .limit(10)
+  .populate("user", "username"); // Only get username from User model
       res.json(logs);
     } catch (err) {
       console.error("Error fetching activity logs:", err);

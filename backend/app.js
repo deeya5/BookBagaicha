@@ -61,6 +61,7 @@ app.use("/api/v1", genreRoutes);
 app.use("/api/v1", activityRoutes);
 
 
+
 // Debugging Log to check if user routes are loaded
 console.log("✅ User routes loaded successfully!");
 

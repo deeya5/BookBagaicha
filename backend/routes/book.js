@@ -78,7 +78,7 @@ router.delete("/delete-book", authenticateToken, async (req, res) => {
 // Get all books
 router.get("/get-all-books", authenticateToken, async (req, res) => {
   try {
-    const books = await Book.find().sort({ createdAt: -1 });
+    const books = await Book.find().sort({ createdAt: -1 }).populate("genre");
     return res.json({ status: "Success", data: books });
   } catch (error) {
     res.status(500).json({ message: "Error" });

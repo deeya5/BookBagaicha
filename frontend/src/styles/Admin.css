@@ -126,6 +126,24 @@
   color: #4a4a4a;
 }
 
+.activity-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.activity-log-table th,
+.activity-log-table td {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.activity-log-table th {
+  background-color: #f4f4f4;
+}
+
+
 .users {
   border-left: 5px solid #34a853;
 }
