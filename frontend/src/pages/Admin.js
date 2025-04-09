@@ -271,7 +271,7 @@ const Admin = () => {
             <tr key={book._id}>
               <td>{book.title}</td>
               <td>{book.author}</td>
-              <td>{book.genre}</td>
+              <td>{book.genre?.name || "N/A"}</td>
               <td>
                 <button onClick={() => deleteItem("book", book._id)}>Delete</button>
               </td>
@@ -292,20 +292,23 @@ const Admin = () => {
           <section className="genres-section">
             <h2>Genres</h2>
             <table className="genres-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {genres.map((genre) => (
-                  <tr key={genre._id}>
-                    <td>{genre.name || "N/A"}</td>
-                    <td><button onClick={() => deleteItem("genre", genre._id)}>Delete</button></td>
-                  </tr>
-                ))}
-              </tbody>
+            <thead>
+  <tr>
+    <th>Name</th>
+    <th>Book Count</th>
+    <th>Actions</th>
+  </tr>
+</thead>
+<tbody>
+  {genres.map((genre) => (
+    <tr key={genre._id}>
+      <td>{genre.name || "N/A"}</td>
+      <td>{genre.bookCount ?? 0}</td>
+      <td><button onClick={() => deleteItem("genre", genre._id)}>Delete</button></td>
+    </tr>
+  ))}
+</tbody>
+
             </table>
           </section>
         )}

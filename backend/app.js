@@ -47,7 +47,7 @@ const favouriteRoutes = require("./routes/favourite");
 const authRoutes = require("./routes/auth");
 const uploadRoutes = require("./routes/upload");
 const genreRoutes = require("./routes/genre");
-const activityRoutes = require("./routes/activityLog")(authenticateToken);
+const activityRoutes = require("./routes/activityLog"); 
 
 
 // Use routes

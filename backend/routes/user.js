@@ -1,47 +1,42 @@
 const express = require("express");
-const router = express.Router();  // <-- Ensure you have this line
+const router = express.Router();
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { authenticateToken } = require("./userAuth");
+const logActivity = require("../controllers/activityLog"); // ✅ Corrected path
 
+// Sign Up
 router.post("/sign-up", async (req, res) => {
     try {
-        const { username, email, password, role } = req.body; // ✅ Remove confirmPassword
+        const { username, email, password, role } = req.body;
 
-        // Check username length
         if (username.length < 4) {
             return res.status(400).json({ message: "Username must be at least 4 characters long!" });
         }
 
-        // Check if username already exists
         const existingUsername = await User.findOne({ username });
         if (existingUsername) {
             return res.status(400).json({ message: "Username already exists!" });
         }
 
-        // Check if email already exists
         const existingEmail = await User.findOne({ email });
         if (existingEmail) {
             return res.status(400).json({ message: "Email already exists!" });
         }
 
-        // Check password length
         if (password.length < 4) {
             return res.status(400).json({ message: "Password too short!" });
         }
 
-        // Hash password
         const hashPass = await bcrypt.hash(password, 10);
 
-        const newUser = new User({
-            username,
-            email,
-            password: hashPass,
-            role,  // Ensure role is set correctly
-        });
-
+        const newUser = new User({ username, email, password: hashPass, role });
         await newUser.save();
+
+        // ✅ Log activity
+        await logActivity("User signed up", newUser._id, `Email: ${email}`);
+
         return res.status(200).json({ message: "SignUp Successful" });
 
     } catch (error) {
@@ -50,27 +45,26 @@ router.post("/sign-up", async (req, res) => {
     }
 });
 
-
-// SignIn Route
+// Sign In
 router.post("/sign-in", async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Check if user exists
         const existingUser = await User.findOne({ email });
         if (!existingUser) {
             return res.status(400).json({ message: "Invalid credentials" });
         }
 
-        // Compare passwords
         const isPasswordValid = await bcrypt.compare(password, existingUser.password);
         if (!isPasswordValid) {
             return res.status(400).json({ message: "Invalid credentials" });
         }
 
-        // Generate JWT token
         const authClaims = { id: existingUser.id, username: existingUser.username, role: existingUser.role };
         const token = jwt.sign(authClaims, "bookbagaicha5", { expiresIn: "30d" });
+
+        // ✅ Log activity
+        await logActivity("User logged in", existingUser._id, `Email: ${email}`);
 
         return res.status(200).json({
             id: existingUser.id,
@@ -85,7 +79,7 @@ router.post("/sign-in", async (req, res) => {
     }
 });
 
-// Get user profile (protected route)
+// Profile Route
 router.get("/profile", authenticateToken, async (req, res) => {
     try {
         const user = await User.findById(req.user.id).select("username email");
@@ -100,16 +94,17 @@ router.get("/profile", authenticateToken, async (req, res) => {
 // Get total users
 router.get("/get-total-users", async (req, res) => {
     try {
-      const userCount = await User.countDocuments();
-      res.status(200).json({ totalUsers: userCount });
+        const userCount = await User.countDocuments();
+        res.status(200).json({ totalUsers: userCount });
     } catch (error) {
-      res.status(500).json({ message: "Error fetching user count" });
+        res.status(500).json({ message: "Error fetching user count" });
     }
-  });
+});
 
-  router.get("/users", async (req, res) => {
+// Get all users
+router.get("/users", async (req, res) => {
     try {
-        const users = await User.find({}, "username email role"); // Fetch only necessary fields
+        const users = await User.find({}, "username email role");
         res.status(200).json(users);
     } catch (error) {
         console.error("Error fetching users:", error);
@@ -117,17 +112,15 @@ router.get("/get-total-users", async (req, res) => {
     }
 });
 
-  
-// Route to fetch users by role
+// Get users by role
 router.get('/users/role/:role', async (req, res) => {
     const { role } = req.params;
     try {
-      const users = await User.find({ role });  // MongoDB query to filter users by role
-      res.json(users);
+        const users = await User.find({ role });
+        res.json(users);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch users by role' });
+        res.status(500).json({ error: 'Failed to fetch users by role' });
     }
-  });
+});
 
-// Export the router
 module.exports = router;

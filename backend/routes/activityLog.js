@@ -1,22 +1,16 @@
 const express = require("express");
-const ActivityLog = require("../models/activityLog");
+const router = express.Router();
+const ActivityLog = require("../models/activityLog");  // Assuming you have this model
 
-module.exports = (authenticateToken) => {
-  const router = express.Router();
-
-  // Protected route
-  router.get("/activity-log", authenticateToken, async (req, res) => {
+// Example route for getting activity logs
+router.get("/activity-log", async (req, res) => {
     try {
-      const logs = await ActivityLog.find()
-  .sort({ timestamp: -1 })
-  .limit(10)
-  .populate("user", "username"); // Only get username from User model
-      res.json(logs);
-    } catch (err) {
-      console.error("Error fetching activity logs:", err);
-      res.status(500).json({ message: "Failed to fetch activity logs" });
+        const logs = await ActivityLog.find();  // Fetching all logs from the ActivityLog model
+        res.status(200).json(logs);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error fetching activity logs" });
     }
-  });
+});
 
-  return router;
-};
+module.exports = router;  // Ensure this export is correct
