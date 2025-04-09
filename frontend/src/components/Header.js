@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/Header.css";
 import logo from "../assets/logo.png";
@@ -9,6 +9,7 @@ const Header = () => {
   const [userName, setUserName] = useState(localStorage.getItem("username") || "");
   const [avatar, setAvatar] = useState(localStorage.getItem("avatar") || "");
   const [isAuthor, setIsAuthor] = useState(localStorage.getItem("isAuthor") === "true");
+  const navigate = useNavigate(); 
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -57,6 +58,7 @@ const Header = () => {
     setIsAuthor(false);
     toggleSidebar();
     window.dispatchEvent(new Event("storage"));
+    navigate("/login"); // Redirect to login
   };
 
   const toggleAuthorMode = () => {

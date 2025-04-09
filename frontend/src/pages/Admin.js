@@ -12,21 +12,27 @@ const Admin = () => {
   const [error, setError] = useState("");
   const [currentView, setCurrentView] = useState("dashboard");
 
-  // State for Users, Authors, Books, and Genres
   const [users, setUsers] = useState([]);
   const [authors, setAuthors] = useState([]);
   const [books, setBooks] = useState([]);
   const [genres, setGenres] = useState([]);
+  const [activityLog, setActivityLog] = useState([]);
 
   // Fetch Dashboard Data
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const token = localStorage.getItem("authToken");
-        const admin = localStorage.getItem("username");
+        const token = localStorage.getItem("authToken"); // Fetch token from localStorage
+        const admin = localStorage.getItem("username"); // Fetch admin name from localStorage
         setAdminName(admin);
 
-        // Fetching total users, books, genres data
+        if (!token) {
+          console.error("Authentication token is missing.");
+          setError("Authentication token is missing.");
+          return;
+        }
+
+        // Fetch dashboard data (users, books, genres)
         const usersResponse = await axios.get("http://localhost:1000/api/v1/get-total-users", {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -37,12 +43,22 @@ const Admin = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        setTotalUsers(usersResponse.data.totalUsers);
-        setTotalBooks(booksResponse.data.totalBooks); // Set total books
-        setTotalGenres(genresResponse.data.totalGenres);
+        // Fetch activity log if token is present
+        const activityLogResponse = await axios.get("http://localhost:1000/api/v1/activity-log", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-        // Also fetch books data to display in the "Books" section
-        setBooks(booksResponse.data.books); // Assuming booksResponse.data.books contains the array of books
+        setTotalUsers(usersResponse.data.totalUsers);
+        setTotalBooks(booksResponse.data.totalBooks);
+        setTotalGenres(genresResponse.data.totalGenres);
+        setBooks(booksResponse.data.books);
+
+        // Check if activityLogResponse contains valid data
+        if (activityLogResponse && activityLogResponse.data && Array.isArray(activityLogResponse.data)) {
+          setActivityLog(activityLogResponse.data);
+        } else {
+          console.error("Activity log data is empty or not found.");
+        }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
         setError("Failed to load dashboard data.");
@@ -50,46 +66,51 @@ const Admin = () => {
     };
 
     fetchDashboardData();
-  }, []);
+  }, []); // Dependency array is empty to ensure it runs only once when the component mounts
 
-  // Fetch Users by Role
   const fetchUsersByRole = async (role) => {
     try {
-      const response = await axios.get(`http://localhost:1000/api/v1/users/role/${role}`);
-      if (role === "user") {
-        setUsers(response.data);
-      } else if (role === "author") {
-        setAuthors(response.data);
-      }
+      const token = localStorage.getItem("authToken");
+      const response = await axios.get(`http://localhost:1000/api/v1/users/role/${role}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (role === "user") setUsers(response.data);
+      else if (role === "author") setAuthors(response.data);
     } catch (error) {
       console.error("Error fetching users by role:", error);
     }
   };
 
-  // Fetch Books
   const fetchBooks = async () => {
     try {
-      const response = await axios.get("http://localhost:1000/api/v1/get-books");
-      setBooks(response.data); // Assuming response.data is an array of books
+      const token = localStorage.getItem("authToken");
+      const response = await axios.get("http://localhost:1000/api/v1/get-books", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setBooks(response.data);
     } catch (error) {
       console.error("Error fetching books:", error);
     }
   };
 
-  // Fetch Genres
   const fetchGenres = async () => {
     try {
-      const response = await axios.get("http://localhost:1000/api/v1/get-genres");
+      const token = localStorage.getItem("authToken");
+      const response = await axios.get("http://localhost:1000/api/v1/get-genres", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setGenres(response.data);
     } catch (error) {
       console.error("Error fetching genres:", error);
     }
   };
 
-  // Delete Item
   const deleteItem = async (type, id) => {
     try {
-      await axios.delete(`http://localhost:1000/api/v1/delete-${type}/${id}`);
+      const token = localStorage.getItem("authToken");
+      await axios.delete(`http://localhost:1000/api/v1/delete-${type}/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (type === "user") fetchUsersByRole("user");
       if (type === "author") fetchUsersByRole("author");
       if (type === "book") fetchBooks();
@@ -142,6 +163,22 @@ const Admin = () => {
                 <p>{totalGenres}</p>
               </div>
             </div>
+
+            <div className="activity-log">
+              <h3>Recent Activity</h3>
+              <ul>
+                {activityLog.length === 0 ? (
+                  <li>No recent activity.</li>
+                ) : (
+                  activityLog.map((log) => (
+                    <li key={log._id}>
+                      <span>{log.action}</span>
+                      <small>{new Date(log.timestamp).toLocaleString()}</small>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
           </section>
         )}
 
@@ -161,9 +198,7 @@ const Admin = () => {
                   <tr key={user._id}>
                     <td>{user.username}</td>
                     <td>{user.email}</td>
-                    <td>
-                      <button onClick={() => deleteItem("user", user._id)}>Delete</button>
-                    </td>
+                    <td><button onClick={() => deleteItem("user", user._id)}>Delete</button></td>
                   </tr>
                 ))}
               </tbody>
@@ -187,9 +222,7 @@ const Admin = () => {
                   <tr key={author._id}>
                     <td>{author.username || "N/A"}</td>
                     <td>{author.email}</td>
-                    <td>
-                      <button onClick={() => deleteItem("author", author._id)}>Delete</button>
-                    </td>
+                    <td><button onClick={() => deleteItem("author", author._id)}>Delete</button></td>
                   </tr>
                 ))}
               </tbody>
@@ -200,7 +233,7 @@ const Admin = () => {
         {currentView === "books" && (
           <section className="books-section">
             <h2>Books</h2>
-            <p>Total Books: {totalBooks}</p> {/* Display total books count */}
+            <p>Total Books: {totalBooks}</p>
             <table className="books-table">
               <thead>
                 <tr>
@@ -223,7 +256,7 @@ const Admin = () => {
             </table>
           </section>
         )}
-        
+
         {currentView === "genres" && (
           <section className="genres-section">
             <h2>Genres</h2>
@@ -238,16 +271,13 @@ const Admin = () => {
                 {genres.map((genre) => (
                   <tr key={genre._id}>
                     <td>{genre.name || "N/A"}</td>
-                    <td>
-                      <button onClick={() => deleteItem("genre", genre._id)}>Delete</button>
-                    </td>
+                    <td><button onClick={() => deleteItem("genre", genre._id)}>Delete</button></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </section>
         )}
-
       </main>
     </div>
   );

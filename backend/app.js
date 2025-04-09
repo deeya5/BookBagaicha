@@ -3,6 +3,27 @@ const app = express();
 const cors = require("cors");
 const dotenv = require("dotenv");
 
+const jwt = require("jsonwebtoken");
+
+// Middleware to authenticate token
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ message: "Authentication token required" });
+  }
+
+  jwt.verify(token, "bookbagaicha5", (err, user) => {
+    if (err) {
+      return res.status(403).json({ message: "Invalid or expired token" });
+    }
+    req.user = user;
+    next();
+  });
+}
+
+
 // Load environment variables
 dotenv.config();
 
@@ -26,6 +47,8 @@ const favouriteRoutes = require("./routes/favourite");
 const authRoutes = require("./routes/auth");
 const uploadRoutes = require("./routes/upload");
 const genreRoutes = require("./routes/genre");
+const activityRoutes = require("./routes/activityLog")(authenticateToken);
+
 
 // Use routes
 app.use("/api/v1", userRoutes);
@@ -35,6 +58,8 @@ app.use("/api/auth", authRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use("/api/v1", uploadRoutes);
 app.use("/api/v1", genreRoutes);
+app.use("/api/v1", activityRoutes);
+
 
 // Debugging Log to check if user routes are loaded
 console.log("✅ User routes loaded successfully!");
