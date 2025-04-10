@@ -8,57 +8,74 @@
 }
 
 .section-header {
-  background: #d3c0db;
   display: inline-block;
   padding: 8px 16px;
   border-radius: 10px;
-  font-size: 18px;
+  font-size: 25px;
   font-weight: bold;
   margin-bottom: 15px;
 }
 
 .books-list {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  flex-wrap: wrap;
   gap: 20px;
+  justify-content: center;
 }
 
 .book-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 15px;
-  width: 80%;
+  gap: 10px;
+  width: 150px;
+  cursor: pointer;
 }
 
 .book-cover {
-  width: 80px;
-  height: 100px;
+  width: 120px;
+  height: 180px;
   object-fit: cover;
   border-radius: 5px;
 }
 
 .book-info {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  font-size: 16px;
-  font-weight: bold;
 }
 
 .book-title {
+  font-size: 14px;
+  font-weight: bold;
   margin: 0;
 }
 
 .delete-icon {
   cursor: pointer;
-  color: #d9534f;
+  color: #f28d88; /* Soft, pastel red */
+  font-size: 20px;
+  margin-top: 5px;
+  background: none; /* No background */
+  border: none; /* No border */
+  padding: 0; /* No padding */
+  transition: color 0.2s, transform 0.2s; /* Smooth transition */
+}
+
+.delete-icon i {
+  font-size: 22px; /* Adjust icon size */
 }
 
 .delete-icon:hover {
-  color: #c9302c;
+  color: #f44336; /* Bright red on hover */
+  transform: scale(1.1); /* Slightly enlarge on hover */
 }
+
+.delete-icon:active {
+  transform: scale(0.9); /* Shrink on click */
+}
+
+
 
 .divider {
   width: 80%;

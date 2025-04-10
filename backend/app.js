@@ -23,7 +23,6 @@ function authenticateToken(req, res, next) {
   });
 }
 
-
 // Load environment variables
 dotenv.config();
 
@@ -48,6 +47,7 @@ const authRoutes = require("./routes/auth");
 const uploadRoutes = require("./routes/upload");
 const genreRoutes = require("./routes/genre");
 const activityRoutes = require("./routes/activityLog"); 
+const libraryRoutes = require("./routes/library");
 
 
 // Use routes
@@ -59,6 +59,7 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api/v1", uploadRoutes);
 app.use("/api/v1", genreRoutes);
 app.use("/api/v1", activityRoutes);
+app.use("/api/v1/library", libraryRoutes);
 
 
 

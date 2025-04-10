@@ -14,18 +14,28 @@
   flex-direction: column;
   align-items: center;
   padding: 20px 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 1000;
+  overflow-y: auto;
 }
 
 .admin-profile {
   text-align: center;
   margin-bottom: 20px;
+  padding: 0 10px;
+  max-width: 100%;
 }
 
 .admin-avatar {
   width: 85px;
   height: 85px;
+  object-fit: cover;
   border-radius: 50%;
   border: 3px solid #f4e1c1; /* Warm highlight */
+  margin-bottom: 10px;
 }
 
 .online-status {
@@ -69,16 +79,30 @@
   padding: 20px;
   display: flex;
   flex-direction: column;
+  margin-left: 260px;
 }
 
 .admin-header {
+  position: fixed;
+  top: 0;
+  left: 260px;
+  right: 0;
+  z-index: 999;
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: #fff;
-  padding: 15px;
-  border-radius: 10px;
+  padding: 15px 20px;
+  border-radius: 0 0 10px 10px;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.admin-content > .dashboard,
+.admin-content > .users-section,
+.admin-content > .authors-section,
+.admin-content > .books-section,
+.admin-content > .genres-section {
+  margin-top: 100px; /* To account for fixed header */
 }
 
 .admin-logo {
@@ -92,10 +116,6 @@
 }
 
 /* Dashboard Stats */
-.dashboard {
-  margin-top: 20px;
-}
-
 .dashboard h2 {
   margin-bottom: 20px;
   color: #3b5323;
@@ -142,7 +162,6 @@
 .activity-log-table th {
   background-color: #f4f4f4;
 }
-
 
 .users {
   border-left: 5px solid #34a853;

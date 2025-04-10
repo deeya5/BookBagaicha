@@ -1,37 +1,37 @@
 const mongoose = require("mongoose");
 
 const user = new mongoose.Schema({
-    username:{
+    username: {
         type: String,
         required: true,
         unique: true,
     },
-    email:{
+    email: {
         type: String,
         required: true,
         unique: true,
     },
-    password:{
+    password: {
         type: String,
         required: true,
     },
-    avatar:{
+    avatar: {
         type: String,
         default: "https://cdn-icons-png.flaticon.com/128/3177/3177440.png",
     },
-    role:{
+    role: {
         type: String,
-        default: "user",
-        enum: ["user", "admin", "author"],
+        default: "user", // Default role is "user"
+        enum: ["user", "admin_user", "admin_book", "super_admin", "author"], // Added admin roles
     },
-    favourites:{
+    favourites: {
         type: mongoose.Types.ObjectId,
         ref: "books",
     },
-    library:{
+    library: {
         type: mongoose.Types.ObjectId,
         ref: "books",
     },
-    
 });
+
 module.exports = mongoose.model("user", user);

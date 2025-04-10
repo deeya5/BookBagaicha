@@ -12,6 +12,9 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    localStorage.removeItem("authToken");
+    
   
     try {
       const response = await axios.post(
