@@ -109,4 +109,32 @@ router.get("/get-book-by-id/:id", authenticateToken, async (req, res) => {
 // Get books from Gutendex API
 router.get("/get-books-from-gutendex", fetchBooksFromGutendex);
 
+// Search for books by title
+router.get("/search-books", async (req, res) => {
+  try {
+    const { title } = req.query; // Get search query from URL parameter
+    if (!title) {
+      return res.status(400).json({ message: "Title query parameter is required" });
+    }
+
+    // Find books with titles that contain the search query (case-insensitive)
+    const books = await Book.find({
+      title: { $regex: title, $options: "i" } // Case-insensitive regex search
+    }).populate("genre");
+
+    if (books.length === 0) {
+      return res.status(404).json({ message: "No books found matching the search query" });
+    }
+
+    return res.status(200).json({
+      status: "Success",
+      data: books,
+    });
+  } catch (error) {
+    console.error("Error searching books:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
 module.exports = router;

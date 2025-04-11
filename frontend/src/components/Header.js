@@ -1,15 +1,37 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/Header.css";
 import logo from "../assets/logo.png";
+
 
 const Header = () => {
   const [showSidebar, setShowSidebar] = useState(false);
   const [userName, setUserName] = useState(localStorage.getItem("username") || "");
   const [avatar, setAvatar] = useState(localStorage.getItem("avatar") || "");
   const [isAuthor, setIsAuthor] = useState(localStorage.getItem("isAuthor") === "true");
-  const navigate = useNavigate(); 
+  const [searchQuery, setSearchQuery] = useState("");  // Search input state
+  const [searchResults, setSearchResults] = useState([]); // Search results state
+  const [noResults, setNoResults] = useState(false); // To track if no results found
+  const navigate = useNavigate();
+  const searchRef = useRef(null);
+
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setSearchResults([]);
+        setNoResults(false);
+      }
+    };
+  
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+  
+
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -67,6 +89,38 @@ const Header = () => {
     localStorage.setItem("isAuthor", newAuthorState);
   };
 
+  // Handle Search
+  const handleSearchChange = async (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    if (query.trim() === "") {
+      setSearchResults([]);
+      setNoResults(false);
+      return;
+    }
+
+    try {
+      const response = await axios.get(`http://localhost:1000/api/v1/search-books?title=${query}`);
+      if (response.data.status === "Success" && response.data.data.length > 0) {
+        setSearchResults(response.data.data);
+        setNoResults(false);
+      } else {
+        setSearchResults([]);
+        setNoResults(true);
+      }
+    } catch (error) {
+      console.error("Error searching books:", error);
+    }
+  };
+
+  const handleSearchKeyPress = (e) => {
+    if (e.key === "Enter") {
+      // Redirect to search results page or show results in a modal, etc.
+      navigate(`/search-results?query=${searchQuery}`);
+    }
+  };
+
   return (
     <>
       <header className="header">
@@ -84,7 +138,34 @@ const Header = () => {
           </ul>
         </nav>
         <div className="header-actions">
-          <input type="text" className="search-bar" placeholder="Search..." />
+        <div className="search-container" ref={searchRef}>
+  <input
+    type="text"
+    className="search-bar"
+    placeholder="Search..."
+    value={searchQuery}
+    onChange={handleSearchChange}
+    onKeyDown={handleSearchKeyPress}
+  />
+  {searchQuery && (
+    <div className={`search-results ${searchResults.length > 0 || noResults ? 'visible' : ''}`}>
+      {searchResults.length > 0 ? (
+        <ul>
+          {searchResults.map((book) => (
+            <li key={book._id}>
+              <Link to={`/book/${book._id}`} onClick={() => setSearchQuery("")}>
+                {book.title}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : noResults ? (
+        <div className="no-results">No results found</div>
+      ) : null}
+    </div>
+  )}
+</div>
+
           <Link to="/library" className="book-icon">
             <i className="fas fa-book"></i>
           </Link>

@@ -11,6 +11,7 @@ import Settings from "./pages/Settings";
 import Admin from "./pages/Admin";
 import Genre from "./pages/Genre";
 import BookDetail from "./pages/BookDetail";
+import SearchResults from "./components/SearchResults";
 
 const Layout = ({ children }) => {
   const location = useLocation();
@@ -44,6 +45,7 @@ function App() {
           <Route path="/Admin" element={<Admin />} />
           <Route path="/Genre" element={<Genre />} />
           <Route path="/book/:id" element={<BookDetail />} />
+          <Route path="/search-results" element={<SearchResults />} /> 
 
         </Routes>
       </Layout>
