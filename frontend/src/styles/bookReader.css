@@ -1,0 +1,42 @@
+.book-reader-container {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 2rem;
+    background: #fdfdfd;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    font-family: "Georgia", serif;
+    line-height: 1.7;
+  }
+  
+  .book-reader-header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  
+  .book-reader-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+  }
+  
+  .book-reader-header h3 {
+    color: #666;
+  }
+  
+  .book-reader-content {
+    max-height: 70vh;
+    overflow-y: auto;
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    white-space: pre-wrap;
+    font-size: 1rem;
+    color: #333;
+  }
+  
+  .loading-text {
+    text-align: center;
+    padding: 2rem;
+  }
+  

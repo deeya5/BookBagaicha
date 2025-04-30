@@ -4,7 +4,9 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { authenticateToken } = require("./userAuth");
-const logActivity = require("../controllers/activityLog"); // ✅ Corrected path
+const logActivity = require("../controllers/activityLog");
+const authorizePermissions = require("../middleware/authorizePermissions");
+const rolesPermissions = require("../config/permissions");
 
 // Sign Up
 router.post("/sign-up", async (req, res) => {
@@ -31,10 +33,16 @@ router.post("/sign-up", async (req, res) => {
 
         const hashPass = await bcrypt.hash(password, 10);
 
-        const newUser = new User({ username, email, password: hashPass, role });
+        const newUser = new User({
+            username,
+            email,
+            password: hashPass,
+            role,
+            permissions: Object.keys(rolesPermissions[role] || {}).flatMap(key => rolesPermissions[role][key])
+          });
         await newUser.save();
 
-        // ✅ Log activity
+        // Log activity
         await logActivity("User signed up", newUser._id, `Email: ${email}`);
 
         return res.status(200).json({ message: "SignUp Successful" });
@@ -63,7 +71,7 @@ router.post("/sign-in", async (req, res) => {
         const authClaims = { id: existingUser.id, username: existingUser.username, role: existingUser.role };
         const token = jwt.sign(authClaims, "bookbagaicha5", { expiresIn: "30d" });
 
-        // ✅ Log activity
+        // Log activity
         await logActivity("User logged in", existingUser._id, `Email: ${email}`);
 
         return res.status(200).json({
@@ -114,6 +122,36 @@ router.get("/users", async (req, res) => {
 
 // Get users by role
 router.get('/users/role/:role', async (req, res) => {
+    const { role } = req.params;
+    try {
+        const users = await User.find({ role });
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch users by role' });
+    }
+});
+
+// Secure admin-only route with specific permissions
+router.get("/users", authenticateToken, authorizePermissions("manageUsers"), async (req, res) => {
+    try {
+        const users = await User.find({}, "username email role");
+        res.status(200).json(users);
+    } catch (error) {
+        console.error("Error fetching users:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+router.get("/get-total-users", authenticateToken, authorizePermissions("manageUsers"), async (req, res) => {
+    try {
+        const userCount = await User.countDocuments();
+        res.status(200).json({ totalUsers: userCount });
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching user count" });
+    }
+});
+
+router.get("/users/role/:role", authenticateToken, authorizePermissions("manageUsers"), async (req, res) => {
     const { role } = req.params;
     try {
         const users = await User.find({ role });

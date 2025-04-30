@@ -1,32 +1,21 @@
-const jwt = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
 
-const authenticateUser = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  
-  // Check if token is provided
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "No token provided" });
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ message: 'Token not provided' });
   }
 
-  // Extract token
-  const token = authHeader.split(" ")[1];
-
-  try {
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "bookbagaicha5");
-    req.user = { id: decoded.id };  // Attach user information to request
-
-    // Log for debugging (optional)
-    // console.log("Token valid for user ID:", decoded.id);
-
-    next(); // Pass control to the next middleware/route handler
-  } catch (err) {
-    // Handle token errors (expired or invalid)
-    if (err.name === "TokenExpiredError") {
-      return res.status(401).json({ message: "Token has expired" });
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      console.error('Token verification error:', err);
+      return res.status(403).json({ message: 'Invalid token' });
     }
-    return res.status(401).json({ message: "Invalid token" });
-  }
-};
+    req.user = user;
+    next();
+  });
+}
 
-module.exports = authenticateUser;
+module.exports = authenticateToken;

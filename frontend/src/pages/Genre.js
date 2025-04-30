@@ -1,11 +1,30 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import "../styles/genre.css";
 
+const genreImageMap = {
+  Horror: require("../assets/fantasy.jpg"),
+  Adventure: require("../assets/fantasy.jpg"),
+  Romance: require("../assets/fantasy.jpg"),
+  Drama: require("../assets/fantasy.jpg"),
+  Fantasy: require("../assets/fantasy.jpg"),
+  "Psychological Fiction": require("../assets/fantasy.jpg"),
+  Comedy: require("../assets/fantasy.jpg"),
+  Biography: require("../assets/fantasy.jpg"),
+  Classic: require("../assets/fantasy.jpg"),
+  Mystery: require("../assets/fantasy.jpg"),
+  "Gothic Fiction": require("../assets/fantasy.jpg"),
+  "Science Fiction": require("../assets/fantasy.jpg"),
+  Miscellaneous: require("../assets/fantasy.jpg"),
+};
+
+
+
 const Genre = () => {
-  const [booksByGenre, setBooksByGenre] = useState({});
+  const [genres, setGenres] = useState([]);
   const [error, setError] = useState("");
-  const scrollRefs = useRef({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     const genreMapping = {
@@ -39,77 +58,42 @@ const Genre = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        const categorizedBooks = response.data.data.reduce((acc, book) => {
+        const genreSet = new Set();
+
+        response.data.data.forEach((book) => {
           const genre = extractGenre(book.desc || "");
-          if (!acc[genre]) acc[genre] = [];
-          acc[genre].push(book);
-          return acc;
-        }, {});
+          genreSet.add(genre);
+        });
 
-        setBooksByGenre(categorizedBooks);
-
-        // Scroll to hash if exists
-        const hash = window.location.hash?.substring(1); // e.g., 'romance'
-        if (hash) {
-          const genreSection = document.getElementById(hash);
-          if (genreSection) {
-            setTimeout(() => {
-              genreSection.scrollIntoView({ behavior: "smooth" });
-            }, 300); // Delay to ensure rendering
-          }
-        }
+        setGenres(Array.from(genreSet));
       } catch (error) {
         console.error("Error fetching books:", error);
-        setError("Failed to load books. Please try again later.");
+        setError("Failed to load genres. Please try again later.");
       }
     };
 
     fetchBooks();
   }, []);
 
-  const handleScroll = (genre, direction) => {
-    if (scrollRefs.current[genre]) {
-      const scrollAmount = 300;
-      scrollRefs.current[genre].scrollLeft += direction * scrollAmount;
-    }
+  const handleGenreClick = (genre) => {
+    const slug = genre.toLowerCase().replace(/\s/g, "-");
+    navigate(`/genre/${slug}`);
   };
 
   return (
-    <div className="genre-container">
-      <h1 className="page-title">Books by Genre</h1>
-      {error && <p className="error-message">{error}</p>}
+    <div className="genre-grid-container">
+  <h2 className="genre-grid-title">Browse The Genre</h2>
+  <p className="genre-subtitle">Dive into what you're into.</p>
 
-      {Object.keys(booksByGenre).length > 0 ? (
-        Object.entries(booksByGenre).map(([genre, books]) => (
-          <div key={genre} className="genre-section" id={genre.toLowerCase()}>
-            <h2 className="genre-title">{genre}</h2>
-            <div className="books-scroll-container">
-              <button className="scroll-button scroll-left" onClick={() => handleScroll(genre, -1)}>&lt;</button>
-              <div className="books-grid" ref={(el) => (scrollRefs.current[genre] = el)}>
-                {books.map((book, index) => (
-                  <div key={book.title || index} className="book-card">
-                    <img
-                      src={book.coverImage || "https://via.placeholder.com/150"}
-                      alt={book.title}
-                      className="book-cover"
-                      onError={(e) => (e.target.src = "https://via.placeholder.com/150")}
-                    />
-                    <h3 className="book-title">{book.title}</h3>
-                    <p className="book-author">by {book.author}</p>
-                    <a href={book.url} target="_blank" rel="noopener noreferrer" className="read-button">
-                      Read Book
-                    </a>
-                  </div>
-                ))}
-              </div>
-              <button className="scroll-button scroll-right" onClick={() => handleScroll(genre, 1)}>&gt;</button>
-            </div>
-          </div>
-        ))
-      ) : (
-        <p className="loading-text">Loading books...</p>
-      )}
-    </div>
+  <div className="genre-grid">
+    {genres.map((genre) => (
+      <div key={genre} className="genre-image-button" onClick={() => handleGenreClick(genre)}>
+        <img src={genreImageMap[genre]} alt={genre} className="genre-image" />
+        <div className="genre-label">{genre}</div>
+      </div>
+    ))}
+  </div>
+</div>
   );
 };
 

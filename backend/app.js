@@ -48,7 +48,7 @@ const uploadRoutes = require("./routes/upload");
 const genreRoutes = require("./routes/genre");
 const activityRoutes = require("./routes/activityLog"); 
 const libraryRoutes = require("./routes/library");
-
+const reviewRoutes = require("./routes/reviewRoutes");
 
 
 // Use routes
@@ -61,11 +61,11 @@ app.use("/api/v1", uploadRoutes);
 app.use("/api/v1", genreRoutes);
 app.use("/api/v1", activityRoutes);
 app.use("/api/v1/library", libraryRoutes);
-
+app.use("/api/v1/reviews", reviewRoutes);
 
 
 // Debugging Log to check if user routes are loaded
-console.log("✅ User routes loaded successfully!");
+console.log("User routes loaded successfully!");
 
 // Handle invalid routes (404 error)
 app.use((req, res) => {
@@ -74,12 +74,12 @@ app.use((req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error("❌ Server Error:", err.stack);
+  console.error(" Server Error:", err.stack);
   res.status(500).json({ message: "Internal Server Error" });
 });
 
 // Start the server
 const PORT = process.env.PORT || 1000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server started on port ${PORT}`);
+  console.log(`Server started on port ${PORT}`);
 });

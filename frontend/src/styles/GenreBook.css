@@ -1,0 +1,112 @@
+.genre-books-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.page-title {
+  text-align: center;
+  font-size: 2.5rem;
+  color:rgb(0, 62, 0);
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.page-title::after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 4px;
+  background-color: #8dc682;
+  margin: 10px auto 30px auto;
+  border-radius: 2px;
+}
+
+.books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 30px;
+  padding: 20px 0;
+}
+
+.book-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 15px;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.book-card:hover {
+  transform: translateY(-5px);
+}
+
+.book-cover {
+  width: 100%;
+  height: 230px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.book-title {
+  font-size: 1.1rem;
+  margin: 10px 0 5px;
+  font-weight: bold;
+  color: #333;
+}
+
+.book-author {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+
+.read-button {
+  background-color: #8dc682;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 5px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background 0.2s ease;
+}
+
+.read-button:hover {
+  background-color: #74b865;
+}
+
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 6px solid #ccc;
+  border-top: 6px solid #8dc682;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-message {
+  text-align: center;
+  color: red;
+  font-weight: bold;
+}
+
+.loading-text {
+  text-align: center;
+  color: #777;
+  font-style: italic;
+}

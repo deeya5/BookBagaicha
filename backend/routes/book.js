@@ -99,7 +99,13 @@ router.get("/get-recent-books", authenticateToken, async (req, res) => {
 router.get("/get-book-by-id/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
+    console.log("Requested book ID:", id);
     const book = await Book.findById(id);
+    if (!book) {
+      console.log("Book not found in DB.");
+      return res.status(404).json({ message: "Book not found" });
+    }
+
     return res.json({ status: "Success", data: book });
   } catch (error) {
     res.status(500).json({ message: "Error" });

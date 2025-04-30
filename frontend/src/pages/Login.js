@@ -28,7 +28,7 @@ const Login = () => {
         // Store user details in localStorage
         localStorage.setItem("username", username);
         localStorage.setItem("authToken", token);
-        localStorage.setItem("userRole", role); // Store role
+        localStorage.setItem("userRole", role);
         window.dispatchEvent(new Event("storage")); // Force UI update
   
         // Redirect based on role

@@ -1,20 +1,18 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../styles/library.css";
-import { useNavigate } from "react-router-dom"; // Importing useNavigate for navigation
-import BookCard from "../components/BookCard";
+import { useNavigate } from "react-router-dom";
 
 const Library = () => {
   const [currentReads, setCurrentReads] = useState([]);
   const [libraryBooks, setLibraryBooks] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate(); // Hook for navigation
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchBooks = async () => {
-      const token = localStorage.getItem("authToken"); // 🔥 Fix applied here
-      console.log("Token:", token);
+      const token = localStorage.getItem("authToken");
 
       if (!token) {
         setError("You need to log in first.");
@@ -29,8 +27,6 @@ const Library = () => {
           },
         });
 
-        console.log("API Response:", response.data);
-
         const books = response.data;
 
         if (Array.isArray(books) && books.length) {
@@ -41,16 +37,12 @@ const Library = () => {
         }
       } catch (error) {
         console.error("Error fetching library books:", error);
-        if (error.response) {
-          if (error.response.status === 401) {
-            setError("Unauthorized access. Please log in again.");
-          } else if (error.response.status === 500) {
-            setError("Internal server error. Please try again later.");
-          } else {
-            setError("Something went wrong. Please try again.");
-          }
+        if (error.response?.status === 401) {
+          setError("Unauthorized access. Please log in again.");
+        } else if (error.response?.status === 500) {
+          setError("Internal server error. Please try again later.");
         } else {
-          setError("Failed to load your library.");
+          setError("Something went wrong. Please try again.");
         }
       } finally {
         setLoading(false);
@@ -60,8 +52,7 @@ const Library = () => {
     fetchBooks();
   }, []);
 
-  // Delete a book from the library
-  const handleDeleteBook = async (bookId) => {
+  const handleDeleteBook = async (libraryEntryId) => {
     const token = localStorage.getItem("authToken");
 
     if (!token) {
@@ -71,19 +62,51 @@ const Library = () => {
 
     try {
       const response = await axios.delete(
-        `http://localhost:1000/api/v1/library/${bookId}`,
+        `http://localhost:1000/api/v1/library/${libraryEntryId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-      setLibraryBooks(libraryBooks.filter((book) => book._id !== bookId));
+      setLibraryBooks((prev) => prev.filter((book) => book._id !== libraryEntryId));
+      setCurrentReads((prev) => prev.filter((book) => book._id !== libraryEntryId));
       alert(response.data.message);
     } catch (error) {
       console.error("Error deleting book:", error);
       alert("Failed to delete book.");
     }
+  };
+
+  const renderBookCard = (bookEntry) => {
+    const book = bookEntry.book;
+
+    return (
+      <div
+        key={bookEntry._id}
+        className="book-item"
+        onClick={() => navigate(`/book/${book._id}`, { state: { book } })}
+      >
+        <img
+          className="book-cover"
+          src={book.coverImage || "https://via.placeholder.com/150"}
+          alt={book.title}
+        />
+        <div className="book-info">
+          <h3>{book.title}</h3>
+          <p>by {book.author}</p>
+        </div>
+        <button
+          className="delete-icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDeleteBook(bookEntry._id);
+          }}
+        >
+          <i className="fas fa-trash-alt"></i>
+        </button>
+      </div>
+    );
   };
 
   return (
@@ -97,32 +120,7 @@ const Library = () => {
           <div className="section">
             <div className="section-header">Current Reads</div>
             <div className="books-list">
-              {currentReads.map((book) => (
-                <div
-                  key={book._id}
-                  className="book-item"
-                  onClick={() => navigate(`/book/${book._id}`, { state: { book } })}
-                >
-                  <img
-                    className="book-cover"
-                    src={book.coverImage || "https://via.placeholder.com/150"}
-                    alt={book.title}
-                  />
-                  <div className="book-info">
-                    <h3>{book.title}</h3>
-                    <p>by {book.author}</p>
-                  </div>
-                  <button
-                  className="delete-icon"
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent triggering book card navigation
-                    handleDeleteBook(book._id);
-                  }}
-                >
-                  <i className="fas fa-trash-alt"></i> {/* Font Awesome trash icon */}
-                </button>
-                </div>
-              ))}
+              {currentReads.map(renderBookCard)}
             </div>
           </div>
 
@@ -132,33 +130,7 @@ const Library = () => {
           <div className="section">
             <div className="section-header">Added to Library</div>
             <div className="books-list">
-              {libraryBooks.map((book) => (
-                <div
-                  key={book._id}
-                  className="book-item"
-                  onClick={() => navigate(`/book/${book._id}`, { state: { book } })}
-                >
-                  <img
-                    className="book-cover"
-                    src={book.coverImage || "https://placekitten.com/150/150"}
-                    alt={book.title}
-                  />
-                  <div className="book-info">
-                    <h3>{book.title}</h3>
-                    <p>by {book.author}</p>
-                  </div>
-                  <button
-                  className="delete-icon"
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent triggering book card navigation
-                    handleDeleteBook(book._id);
-                  }}
-                >
-                  <i className="fas fa-trash-alt"></i> {/* Font Awesome trash icon */}
-                </button>
-
-                </div>
-              ))}
+              {libraryBooks.map(renderBookCard)}
             </div>
           </div>
         </>

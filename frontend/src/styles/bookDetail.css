@@ -7,7 +7,8 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     display: flex;
     gap: 40px;
-    align-items: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
 }
 
 .book-image {
@@ -23,9 +24,8 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: flex-end;
-    text-align: right;
+    justify-content: flex-start;
+    text-align: left;
 }
 
 .book-title {
@@ -44,6 +44,7 @@
 .button-container {
     display: flex;
     gap: 15px;
+    margin-top: 10px;
 }
 
 .button {
@@ -58,27 +59,202 @@
 }
 
 .read-button {
-    background:rgb(131, 112, 182);
+    background: rgb(131, 112, 182);
     color: #fff;
 }
 
 .read-button:hover {
-    color:rgb(112, 182, 115);
+    color: rgb(112, 182, 115);
     background: #fff;
 }
 
 .add-to-library {
-    color:rgb(131, 112, 182);
+    color: rgb(131, 112, 182);
     background: #fff;
 }
 
 .add-to-library:hover {
-    background:rgb(112, 182, 115);
+    background: rgb(112, 182, 115);
     color: #fff;
 }
 
+/* === Review Section Styling === */
+.review-section {
+    max-width: 900px;
+    margin: 30px auto 0;
+    padding: 20px;
+    background: #fafafa;
+    border-radius: 8px;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+}
+
+.review-section h2 {
+    font-size: 22px;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.review-section form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.review-section label {
+    font-weight: 600;
+    color: #444;
+}
+
+.star-rating {
+    display: flex;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.star-rating input {
+    display: none;
+}
+
+.star-rating label {
+    font-size: 25px;
+    color: #ddd;
+    transition: color 0.2s;
+}
+
+.star-rating input:checked ~ label,
+.star-rating input:hover ~ label {
+    color: rgb(255, 186, 50);
+}
+
+.star-rating {
+    display: flex;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.star-rating input {
+    display: none;
+}
+
+.star-rating label {
+    font-size: 30px;
+    color: #ddd;
+    transition: color 0.2s;
+}
+
+.star-rating input:checked ~ label {
+    color: rgb(255, 186, 50); /* Color when star is selected */
+}
+
+.star-rating input:checked + label,
+.star-rating input:hover ~ label {
+    color: rgb(255, 186, 50); /* Color on hover or selected star */
+}
+
+.star-rating input:checked + label:hover,
+.star-rating input:hover + label {
+    color: rgb(255, 186, 50); /* Highlight hover effect */
+}
+
+.star-rating input:hover ~ label {
+    color: rgb(255, 186, 50); /* Hover effect on all previous stars */
+}
+
+.stars span {
+    font-size: 28px;
+    margin-right: 8px;
+    transition: color 0.2s;
+  }
+  
+  .stars .filled {
+    color: #ffc107;
+  }
+  
+
+.review-section textarea {
+    padding: 10px;
+    font-size: 14px;
+    resize: vertical;
+    min-height: 80px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.review-section button {
+    width: fit-content;
+    padding: 10px 16px;
+    background: rgb(131, 112, 182);
+    color: white;
+    font-weight: bold;
+    border: 2px solid #222;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.review-section button:hover {
+    background: rgb(112, 182, 115);
+    color: #fff;
+}
+
+/* === Review List Styling === */
+.review-list {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+.review-list h2 {
+    font-size: 22px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.review-card {
+    background: #f9f9f9;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 15px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.review-card p {
+    margin: 5px 0;
+    font-size: 15px;
+    color: #444;
+}
+
+.review-card strong {
+    color: rgb(131, 112, 182);
+}
+
+.edit-button {
+    font-size: 14px;
+    color: rgb(112, 182, 115);
+    cursor: pointer;
+    background: none;
+    border: none;
+    transition: color 0.3s;
+}
+
+.edit-button:hover {
+    color: rgb(131, 112, 182);
+}
+
+.edit-review textarea {
+    border-color: #bbb;
+}
+
+.edit-review button {
+    background: rgb(112, 182, 115);
+    color: white;
+}
+
+/* === Explore Section (Unchanged mostly) === */
 .explore-section {
     margin-top: 40px;
+    padding-left: 5rem;
+    padding-bottom: 10rem;
     text-align: center;
 }
 
@@ -118,11 +294,6 @@
     color: #666;
 }
 
-.explore-section {
-    padding-left: 5rem;
-    padding-bottom: 10rem;
-}
-
 .show-more {
     margin: 0;
     padding: 12px 20px;
@@ -141,8 +312,7 @@
     border-color: #4caf50;
 }
 
-
-
+/* === Responsive Fixes === */
 @media (max-width: 768px) {
     .book-detail-container {
         flex-direction: column;
@@ -161,5 +331,15 @@
 
     .button-container {
         flex-direction: column;
+        align-items: center;
+    }
+
+    .review-section, .review-list {
+        padding: 15px;
+        margin: 20px auto;
+    }
+
+    .review-section button {
+        width: 100%;
     }
 }

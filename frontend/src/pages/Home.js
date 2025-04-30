@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from "../utils/axiosInstance";
 import "../styles/Home.css";
 import romanceImage from "../assets/romance.jpg";
 import fantasyImage from "../assets/fantasy.jpg";
@@ -24,22 +24,19 @@ const Home = () => {
   useEffect(() => {
     const fetchFeaturedBooks = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const response = await axios.get("http://localhost:1000/api/v1/get-recent-books", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axiosInstance.get("/get-recent-books");
         setFeaturedBooks(response.data.data);
       } catch (error) {
         console.error("Error fetching featured books:", error);
         setError("Failed to load featured books.");
       }
     };
-
+  
     const storedTopGenres = JSON.parse(localStorage.getItem("topGenres")) || [];
     const genreObjects = storedTopGenres.map((name) => ({ name }));
     setGenres(genreObjects);
     setIsLoadingGenres(false);
-
+  
     fetchFeaturedBooks();
   }, []);
 
