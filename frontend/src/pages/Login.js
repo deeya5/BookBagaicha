@@ -23,9 +23,11 @@ const Login = () => {
       );
   
       if (response.status === 200) {
-        const { username, token, role } = response.data;
+        const { id, username, token, role } = response.data;
+        const user = { _id: id, username, role }; 
   
         // Store user details in localStorage
+        localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("username", username);
         localStorage.setItem("authToken", token);
         localStorage.setItem("userRole", role);

@@ -102,13 +102,16 @@ const handleReadClick = async () => {
   }
 
   try {
-    const response = await axios.post(
+    await axios.post(
       "http://localhost:1000/api/v1/library/add",
-      { bookId: bookIdToUse, userId, currentlyReading: true },
+      { bookId: bookIdToUse, currentlyReading: true }, // no userId in body if backend gets it from token
       { headers: { Authorization: `Bearer ${token}` } }
     );
+    console.log("user", user);
+console.log("userId", user?._id);
 
-    console.log("Book added to library:", response.data);
+
+    // console.log("Book added to library:", response.data);
     navigate(`/read/${bookIdToUse}`);
   } catch (err) {
     console.error("Error starting to read:", err);
@@ -122,9 +125,9 @@ const handleReadClick = async () => {
   }
 };
 
-console.log("📦 Payload being sent:", {
-  bookId,
-});
+// console.log("📦 Payload being sent:", {
+//   bookId,
+// });
 
 
   const handleAddToLibrary = async () => {

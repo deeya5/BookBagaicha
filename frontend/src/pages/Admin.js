@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/Admin.css";
 import logo from "../assets/logo.png";
@@ -26,21 +27,41 @@ const Admin = () => {
   const [formId, setFormId] = useState(null);
 
   const token = localStorage.getItem("authToken");
+  const navigate = useNavigate();
 
   useEffect(() => {
+    const allowedRoles = ["admin_user", "admin_book", "super_admin"];
+    const role = localStorage.getItem("userRole"); // or however you're storing the role
+    const token = localStorage.getItem("authToken"); // make sure token is defined here too
+    console.log("Stored role:", role);
+    console.log("Token:", token);
+    if (!allowedRoles.includes(role)) {
+      setError("Access Denied: You do not have permission to view this page.");
+      navigate("/Login");
+      return;
+    }
+  
     const fetchDashboardData = async () => {
       try {
         const admin = localStorage.getItem("username");
         setAdminName(admin || "Admin");
         if (!token) return setError("Authentication token is missing.");
-
+  
         const [usersRes, booksRes, genresRes, activityLogRes] = await Promise.all([
-          axios.get("http://localhost:1000/api/v1/get-total-users", { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get("http://localhost:1000/api/v1/get-all-books", { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get("http://localhost:1000/api/v1/get-total-genres", { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get("http://localhost:1000/api/v1/activity-log", { headers: { Authorization: `Bearer ${token}` } })
+          axios.get("http://localhost:1000/api/v1/get-total-users", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get("http://localhost:1000/api/v1/get-all-books", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get("http://localhost:1000/api/v1/get-total-genres", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get("http://localhost:1000/api/v1/activity-log", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
         ]);
-
+  
         setTotalUsers(usersRes.data.totalUsers || 0);
         setBooks(booksRes.data.data || []);
         setTotalBooks((booksRes.data.data || []).length);
@@ -51,9 +72,10 @@ const Admin = () => {
         setError("Failed to load dashboard data.");
       }
     };
-
+  
     fetchDashboardData();
-  }, []);
+  }, [navigate]);
+  
 
   const fetchUsersByRole = async (role) => {
     try {
@@ -161,11 +183,35 @@ const Admin = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const openManageModal = (item, type) => {
-    setForm(item);
+    let filteredItem = item;
+  
+    if (type === "user" || type === "author") {
+      filteredItem = {
+        _id: item._id,
+        username: item.username,
+        email: item.email,
+        role: item.role
+      };
+    }
+
+    if (type === "book") {
+      filteredItem = {
+        _id: item._id,
+        title: item.title,
+        author: item.author,
+        genre: item.genre, // ensure this is either genre ID or name for editing
+        desc: item.desc,
+        coverImage: item.coverImage,
+        url: item.url
+      };
+    }
+  
+    setForm(filteredItem);
     setFormType(type);
-    setFormId(item._id);
+    setFormId(filteredItem._id);
     setIsModalOpen(true);
   };
+  
 
   const closeManageModal = () => {
     setIsModalOpen(false);
@@ -220,7 +266,10 @@ const Admin = () => {
                     <tr><th>Action</th><th>User</th><th>Details</th><th>Timestamp</th></tr>
                   </thead>
                   <tbody>
-                    {activityLog.map((log) => (
+                  {[...activityLog]
+                      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                      .map((log) => (
+
                       <tr key={log._id}>
                         <td>{log.action}</td>
                         <td>{log.user?.username || "N/A"}</td>
