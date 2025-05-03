@@ -4,6 +4,8 @@ import axios from "axios";
 import "../styles/Admin.css";
 import logo from "../assets/logo.png";
 import userIcon from "../assets/romance.jpg";
+import {toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Admin = () => {
   const [adminName, setAdminName] = useState("");
@@ -21,20 +23,19 @@ const Admin = () => {
   const [reviews, setReviews] = useState([]);
   const [admins, setAdmins] = useState([]);
 
-
   const [form, setForm] = useState({});
   const [formType, setFormType] = useState(null);
   const [formId, setFormId] = useState(null);
 
   const token = localStorage.getItem("authToken");
+  const role = localStorage.getItem("userRole"); 
+  const allowedRoles = ["admin_user", "admin_book", "super_admin"];
   const navigate = useNavigate();
 
   useEffect(() => {
-    const allowedRoles = ["admin_user", "admin_book", "super_admin"];
-    const role = localStorage.getItem("userRole"); // or however you're storing the role
-    const token = localStorage.getItem("authToken"); // make sure token is defined here too
-    console.log("Stored role:", role);
-    console.log("Token:", token);
+    const token = localStorage.getItem("authToken"); 
+    // console.log("Stored role:", role);
+    // console.log("Token:", token);
     if (!allowedRoles.includes(role)) {
       setError("Access Denied: You do not have permission to view this page.");
       navigate("/Login");
@@ -74,8 +75,24 @@ const Admin = () => {
     };
   
     fetchDashboardData();
-  }, [navigate]);
+  }, [navigate, token, role, allowedRoles]);
   
+  const rolePermissions = {
+    admin_user: ["users", "authors"],
+    admin_book: ["books", "genres", "reviews"],
+    super_admin: ["users", "authors", "books", "genres", "reviews", "admins"]
+  };
+
+  const handleViewChange = (view, fetchFn) => {
+    if (!rolePermissions[role]?.includes(view)) {
+      setError("Access Denied: You do not have permission to access this section.");
+      toast.warn("You do not have permission to access this section.");
+      return;
+    }
+  
+    setCurrentView(view);
+    if (fetchFn) fetchFn();
+  };
 
   const fetchUsersByRole = async (role) => {
     try {
@@ -105,7 +122,6 @@ const Admin = () => {
     }
   };
   
-
   const fetchBooks = async () => {
     try {
       const res = await axios.get("http://localhost:1000/api/v1/get-all-books", {
@@ -141,7 +157,7 @@ const Admin = () => {
 
   const deleteItem = async (type, id) => {
     try {
-      await axios.delete(`http://localhost:1000/api/v1/delete-${type}/${id}`, {
+      await axios.delete(`http://localhost:1000/api/v1/${type}s/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       reload(type);
@@ -161,25 +177,27 @@ const Admin = () => {
     }
   };
 
-  const handleEdit = (item, type) => {
-    setForm(item);
-    setFormType(type);
-    setFormId(item._id);
-  };
-
   const handleSubmit = async () => {
     try {
-      const url = formId ? `http://localhost:1000/api/v1/update-${formType}/${formId}` : `http://localhost:1000/api/v1/create-${formType}`;
+      const url = formId
+        ? `http://localhost:1000/api/v1/update-${formType}/${formId}`
+        : `http://localhost:1000/api/v1/create-${formType}`;
       const method = formId ? "put" : "post";
+  
       await axios[method](url, form, { headers: { Authorization: `Bearer ${token}` } });
+      
+      toast.success(`${formId ? "Updated" : "Created"} ${formType} successfully!`);
+      
       setForm({});
       setFormId(null);
+      setIsModalOpen(false);
       reload(formType);
     } catch (err) {
       console.error(`Error ${formId ? "updating" : "creating"} ${formType}:`, err);
+      toast.error(`Failed to ${formId ? "update" : "create"} ${formType}.`);
     }
   };
-
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const openManageModal = (item, type) => {
@@ -205,14 +223,13 @@ const Admin = () => {
         url: item.url
       };
     }
-  
+ 
     setForm(filteredItem);
     setFormType(type);
     setFormId(filteredItem._id);
     setIsModalOpen(true);
   };
   
-
   const closeManageModal = () => {
     setIsModalOpen(false);
     setForm({});
@@ -228,14 +245,13 @@ const Admin = () => {
           <h3>{adminName}</h3>
         </div>
         <nav className="admin-nav">
-          <button onClick={() => setCurrentView("dashboard")}>Dashboard</button>
-          <button onClick={() => { setCurrentView("users"); fetchUsersByRole("user"); }}>Readers</button>
-          <button onClick={() => { setCurrentView("authors"); fetchUsersByRole("author"); }}>Authors</button>
-          <button onClick={() => { setCurrentView("books"); fetchBooks(); }}>Books</button>
-          <button onClick={() => { setCurrentView("genres"); fetchGenres(); }}>Genres</button>
-          <button onClick={() => { setCurrentView("reviews"); fetchReviews(); }}>Ratings & Reviews</button>
-          <button onClick={() => { setCurrentView("admins"); fetchAllAdmins(); }}>Admins</button>
-
+        <button onClick={() => setCurrentView("dashboard")}>Dashboard</button>
+        <button onClick={() => handleViewChange("users", () => fetchUsersByRole("user"))}>Readers</button>
+        <button onClick={() => handleViewChange("authors", () => fetchUsersByRole("author"))}>Authors</button>
+        <button onClick={() => handleViewChange("books", fetchBooks)}>Books</button>
+        <button onClick={() => handleViewChange("genres", fetchGenres)}>Genres</button>
+        <button onClick={() => handleViewChange("reviews", fetchReviews)}>Ratings & Reviews</button>
+        <button onClick={() => handleViewChange("admins", fetchAllAdmins)}>Admins</button>
         </nav>
       </aside>
   
@@ -287,6 +303,7 @@ const Admin = () => {
         {currentView === "users" && (
           <section className="users-section">
             <h2>Readers</h2>
+            <button className="add-button" onClick={() => openManageModal({}, "user")}>Add New</button>
             <table className="users-table">
               <thead>
                 <tr><th>Name</th><th>Email</th><th>Actions</th></tr>
@@ -307,6 +324,7 @@ const Admin = () => {
         {currentView === "authors" && (
           <section className="authors-section">
             <h2>Authors</h2>
+            <button className="add-button" onClick={() => openManageModal({}, "author")}>Add New</button>
             <table className="authors-table">
               <thead>
                 <tr><th>Name</th><th>Email</th><th>Actions</th></tr>
@@ -327,6 +345,7 @@ const Admin = () => {
         {currentView === "books" && (
           <section className="books-section">
             <h2>Books</h2>
+            <button className="add-button" onClick={() => openManageModal({}, "book")}>Add New</button>
             <p>Total Books: {books.length}</p>
             <table className="books-table">
               <thead>
@@ -349,6 +368,7 @@ const Admin = () => {
         {currentView === "genres" && (
           <section className="genres-section">
             <h2>Genres</h2>
+            <button className="add-button" onClick={() => openManageModal({}, "genre")}>Add New</button>
             <table className="genres-table">
               <thead>
                 <tr><th>Name</th><th>Book Count</th><th>Actions</th></tr>
@@ -397,6 +417,7 @@ const Admin = () => {
         {currentView === "admins" && (
           <section className="admins-section">
             <h2>Admins</h2>
+            <button className="add-button" onClick={() => openManageModal({}, "user")}>Add New</button>
             <table className="admins-table">
               <thead>
                 <tr>
@@ -427,9 +448,6 @@ const Admin = () => {
             </table>
           </section>
         )}
-
-
-
       </main>
 
       {isModalOpen && (
@@ -455,14 +473,7 @@ const Admin = () => {
     </div>
   </div>
 )}
-
-
-
     </div>
-
-
   );
-  
 };
-
 export default Admin;

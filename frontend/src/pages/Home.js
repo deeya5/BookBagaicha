@@ -32,13 +32,57 @@ const Home = () => {
       }
     };
   
-    const storedTopGenres = JSON.parse(localStorage.getItem("topGenres")) || [];
-    const genreObjects = storedTopGenres.map((name) => ({ name }));
-    setGenres(genreObjects);
-    setIsLoadingGenres(false);
+    const genreMapping = {
+      horror: "Horror",
+      adventure: "Adventure",
+      romance: "Romance",
+      drama: "Drama",
+      fantasy: "Fantasy",
+      psychological: "Psychological Fiction",
+      comedy: "Comedy",
+      biography: "Biography",
+      classic: "Classic",
+      mystery: "Mystery",
+      gothic: "Gothic Fiction",
+      science: "Science Fiction",
+    };
   
+    const extractGenre = (desc) => {
+      for (let keyword in genreMapping) {
+        if (desc.toLowerCase().includes(keyword)) {
+          return genreMapping[keyword];
+        }
+      }
+      return "Miscellaneous";
+    };
+  
+    const fetchGenresFromBooks = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axiosInstance.get("/get-books-from-gutendex", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+  
+        const genreSet = new Set();
+        response.data.data.forEach((book) => {
+          const genre = extractGenre(book.desc || "");
+          genreSet.add(genre);
+        });
+  
+        const genreArray = Array.from(genreSet).slice(0, 4); // pick any 4 genres
+        const genreObjects = genreArray.map((name) => ({ name }));
+        setGenres(genreObjects);
+      } catch (err) {
+        console.error("Error fetching genres from books:", err);
+      } finally {
+        setIsLoadingGenres(false);
+      }
+    };
+  
+    fetchGenresFromBooks();
     fetchFeaturedBooks();
   }, []);
+  
 
   return (
     <div className="home">

@@ -4,6 +4,7 @@ import "../styles/bookDetail.css";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { saveBook } from "../utils/offlineDB";
 
 const BookDetail = () => {
   const { state } = useLocation();
@@ -129,6 +130,28 @@ console.log("userId", user?._id);
 //   bookId,
 // });
 
+const handleSaveBook = async (book) => {
+  try {
+    console.log("book in handleSaveBook", book);
+    if (!book.content) {
+      throw new Error("No book content available.");
+    }
+
+    const offlineBook = {
+      id: book._id,
+      title: book.title,
+      author: book.author,
+      description: book.desc || '',
+      content: book.content,
+    };
+
+    await saveBook(offlineBook);
+    toast.success("Book saved for offline reading!");
+  } catch (err) {
+    console.error("Failed to save book:", err);
+    toast.error("Failed to save book for offline reading.");
+  }
+};
 
   const handleAddToLibrary = async () => {
     if (!isLoggedIn) {
@@ -266,6 +289,10 @@ console.log("userId", user?._id);
             <button className="button add-to-library" onClick={handleAddToLibrary}>
               Add To Library
             </button>
+
+            <button className="button save-offline" onClick={() => handleSaveBook(book)}>Save Offline</button>
+
+
           </div>
         </div>
       </div>
@@ -302,7 +329,7 @@ console.log("userId", user?._id);
               <p>{review.comment}</p>
               {review.user?._id === (JSON.parse(localStorage.getItem("user"))?._id) && (
                 <div>
-                  <button onClick={() => handleEditReview(review._id)}>Edit</button>
+                  <button className="edit-button" onClick={() => handleEditReview(review._id)}> Edit</button>
                 </div>
               )}
             </div>

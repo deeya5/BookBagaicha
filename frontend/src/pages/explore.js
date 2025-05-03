@@ -44,13 +44,12 @@ const Explore = () => {
       {Object.keys(books).length > 0 ? (
         Object.entries(books).map(([genre, genreBooks]) => (
           <div key={genre} className="genre-section">
-            <h2>{genre}</h2>
             <div className="books-grid">
               {genreBooks.map((book, index) => (
                 <div
                   key={book.title || index}
                   className="book-card"
-                  onClick={() => navigate(`/book/${book.id}`, { state: { book } })} // Navigate to book details
+                  onClick={() => navigate(`/book/${book._id}`, { state: { book } })}
                 >
                   <img
                     src={book.coverImage || "https://via.placeholder.com/150"}

@@ -49,6 +49,7 @@ const genreRoutes = require("./routes/genre");
 const activityRoutes = require("./routes/activityLog"); 
 const libraryRoutes = require("./routes/library");
 const reviewRoutes = require("./routes/reviewRoutes");
+const adminRoutes = require("./routes/admin.routes");
 
 
 // Use routes
@@ -62,7 +63,7 @@ app.use("/api/v1", genreRoutes);
 app.use("/api/v1", activityRoutes);
 app.use("/api/v1/library", libraryRoutes);
 app.use("/api/v1/reviews", reviewRoutes);
-
+app.use("/admin", adminRoutes);
 
 // Debugging Log to check if user routes are loaded
 console.log("User routes loaded successfully!");

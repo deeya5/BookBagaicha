@@ -179,7 +179,9 @@
 .users-section,
 .authors-section,
 .books-section,
-.genres-section {
+.genres-section,
+.reviews-section,
+.admins-section {
   margin-top: 20px;
   background: #fff;
   padding: 20px;
@@ -187,19 +189,56 @@
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
 
+/* Wrap h2 and button visually */
+.admins-section h2,
+.reviews-section h2,
 .users-section h2,
 .authors-section h2,
 .books-section h2,
 .genres-section h2 {
-  color: #3b5323;
-  margin-bottom: 15px;
+  display: inline-block;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.add-button {
+  display: inline-block;
+  vertical-align: middle;
+  background-color: #3b5323;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin: 0;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.add-button:hover {
+  background-color: #2e411b;
+}
+
+/* Optional: Additional spacing for certain headings */
+.reviews-section h2 {
+  margin-top: 90px;
+}
+
+.admins-section h2 {
+  margin-top: 100px;
+}
+
+.admins-section .add-button {
+  margin-top: 100px; 
 }
 
 /* Table Styling */
 .users-table,
 .authors-table,
 .books-table,
-.genres-table {
+.genres-table,
+.reviews-table,
+.admins-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 15px;
@@ -209,10 +248,14 @@
 .authors-table th,
 .books-table th,
 .genres-table th,
+.reviews-table th,
+.admins-table th,
 .users-table td,
 .authors-table td,
 .books-table td,
-.genres-table td {
+.genres-table td,
+.reviews-table td,
+.admins-table td {
   border: 1px solid #ddd;
   padding: 12px;
   text-align: left;
@@ -221,7 +264,9 @@
 .users-table th,
 .authors-table th,
 .books-table th,
-.genres-table th {
+.genres-table th,
+.reviews-table th,
+.admins-table th {
   background-color: #3b5323;
   color: white;
 }
@@ -229,98 +274,28 @@
 .users-table tr:nth-child(even),
 .authors-table tr:nth-child(even),
 .books-table tr:nth-child(even),
-.genres-table tr:nth-child(even) {
+.genres-table tr:nth-child(even),
+.reviews-table tr:nth-child(even),
+.admins-table tr:nth-child(even) {
   background-color: #f4e1c1;
 }
 
 .users-table tr:hover,
 .authors-table tr:hover,
 .books-table tr:hover,
-.genres-table tr:hover {
-  background-color: #e9cfa4;
-  transition: 0.3s;
-}
-
-/* Reviews Section Styling */
-.reviews-section {
-  margin-top: 20px;
-  background: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
-}
-
-.reviews-section h2 {
-  color: #3b5323;
-  margin-bottom: 15px;
-}
-
-/* Reviews Table Styling */
-.reviews-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
-}
-
-.reviews-table th,
-.reviews-table td {
-  border: 1px solid #ddd;
-  padding: 12px;
-  text-align: left;
-}
-
-.reviews-table th {
-  background-color: #3b5323;
-  color: white;
-}
-
-.reviews-table tr:nth-child(even) {
-  background-color: #f4e1c1;
-}
-
-.reviews-table tr:hover {
-  background-color: #fdf7e3;
-}
-
-.admins-section {
-  margin-top: 20px;
-  background: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
-}
-
-.admins-section h2 {
-  color: #3b5323;
-  margin-bottom: 15px;
-}
-
-.admins-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
-}
-
-.admins-table th,
-.admins-table td {
-  border: 1px solid #ddd;
-  padding: 12px;
-  text-align: left;
-}
-
-.admins-table th {
-  background-color: #3b5323;
-  color: white;
-}
-
-.admins-table tr:nth-child(even) {
-  background-color: #f4e1c1;
-}
-
+.genres-table tr:hover,
+.reviews-table tr:hover,
 .admins-table tr:hover {
   background-color: #e9cfa4;
   transition: 0.3s;
 }
+
+/* Button Position */
+.add-button {
+  margin-left: 50rem;
+}
+
+
 .manage-button {
   background-color:rgb(60, 124, 86);
   color: #fff;
@@ -415,3 +390,117 @@
   color: white;
 }
 
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+/* .add-button {
+  padding: 6px 12px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.add-button:hover {
+  background-color: #45a049;
+} */
+
+@media (max-width: 1024px) {
+  .admin-sidebar {
+    width: 200px;
+    padding: 15px 0;
+  }
+
+  .admin-content {
+    margin-left: 200px;
+    padding: 15px;
+  }
+
+  .admin-header {
+    left: 200px;
+    padding: 12px 16px;
+  }
+
+  .dashboard-stats {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+
+  .admin-logo {
+    width: 120px;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-container {
+    flex-direction: column;
+  }
+
+  .admin-sidebar {
+    position: relative;
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    height: auto;
+    z-index: auto;
+    padding: 10px;
+  }
+
+  .admin-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .admin-nav button {
+    padding: 10px;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .admin-content {
+    margin-left: 0;
+    padding: 15px;
+  }
+
+  .admin-header {
+    position: relative;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 10px;
+  }
+
+  .admin-info {
+    font-size: 16px;
+  }
+
+  .table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .add-button {
+    margin-left: 0;
+    width: 100%;
+    text-align: center;
+  }
+
+  .stat-card {
+    padding: 15px;
+  }
+
+  .modal-content {
+    padding: 1.2rem;
+    width: 95%;
+  }
+}

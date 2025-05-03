@@ -14,6 +14,7 @@ import BookDetail from "./pages/BookDetail";
 import SearchResults from "./components/SearchResults";
 import GenreBooks from "./pages/GenreBooks";
 import BookReader from "./pages/BookReader";
+import MyBooks from "./pages/MyBooks";
 
 
 const Layout = ({ children }) => {
@@ -51,8 +52,7 @@ function App() {
           <Route path="/search-results" element={<SearchResults />} /> 
           <Route path="/genre/:genreId" element={<GenreBooks />} />
           <Route path="/read/:bookId" element={<BookReader />} />
-
-
+          <Route path="/my-books" element={<MyBooks />} />
 
         </Routes>
       </Layout>

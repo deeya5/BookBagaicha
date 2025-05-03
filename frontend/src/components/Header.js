@@ -191,7 +191,7 @@ const Header = () => {
           {userName && (
             <div className="profile-links">
               <Link to="/profile" onClick={toggleSidebar}>My Profile</Link>
-              <Link to="/library" onClick={toggleSidebar}>My Books</Link>
+              <Link to="/my-books" onClick={toggleSidebar}>My Books</Link>
               <Link to="/settings" onClick={toggleSidebar}>Settings</Link>
             </div>
           )}

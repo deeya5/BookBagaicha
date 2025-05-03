@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema({
     enum: ["user", "author", "admin_user", "admin_book", "super_admin"],
   },
   permissions: {
-    type: [String], // e.g., ['manageUsers', 'manageBooks']
+    type: [String], 
     default: [],
   },
   favourites: {
