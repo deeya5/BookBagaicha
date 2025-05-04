@@ -39,10 +39,9 @@ router.post("/sign-up", async (req, res) => {
             password: hashPass,
             role,
             permissions: Object.keys(rolesPermissions[role] || {}).flatMap(key => rolesPermissions[role][key])
-          });
+        });
         await newUser.save();
 
-        // Log activity
         await logActivity("User signed up", newUser._id, `Email: ${email}`);
 
         return res.status(200).json({ message: "SignUp Successful" });
@@ -71,7 +70,6 @@ router.post("/sign-in", async (req, res) => {
         const authClaims = { id: existingUser.id, username: existingUser.username, role: existingUser.role };
         const token = jwt.sign(authClaims, "bookbagaicha5", { expiresIn: "30d" });
 
-        // Log activity
         await logActivity("User logged in", existingUser._id, `Email: ${email}`);
 
         return res.status(200).json({
@@ -87,7 +85,7 @@ router.post("/sign-in", async (req, res) => {
     }
 });
 
-// Profile Route
+// Profile Routes
 router.get("/profile", authenticateToken, async (req, res) => {
     try {
         const user = await User.findById(req.user.id).select("username email");
@@ -99,39 +97,51 @@ router.get("/profile", authenticateToken, async (req, res) => {
     }
 });
 
-// Get total users
-router.get("/get-total-users", async (req, res) => {
+router.put("/profile", authenticateToken, async (req, res) => {
     try {
-        const userCount = await User.countDocuments();
-        res.status(200).json({ totalUsers: userCount });
+        const { username, email, avatar } = req.body;
+
+        // ✅ Log the incoming data to confirm avatar is being sent
+        console.log("Updating user with data:", { username, email, avatar });
+
+        const userId = req.user.id;
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { username, email, avatar },
+            { new: true, runValidators: true }
+        ).select("username email avatar");
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.status(200).json(updatedUser);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching user count" });
+        console.error("Update error:", error);
+        res.status(500).json({ message: "Error updating user profile" });
     }
 });
 
-// Get all users
-router.get("/users", async (req, res) => {
+
+
+router.delete("/profile", authenticateToken, async (req, res) => {
     try {
-        const users = await User.find({}, "username email role");
-        res.status(200).json(users);
+        const userId = req.user.id;
+        const deletedUser = await User.findByIdAndDelete(userId);
+
+        if (!deletedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.status(200).json({ message: "Account deleted successfully" });
     } catch (error) {
-        console.error("Error fetching users:", error);
-        res.status(500).json({ message: "Internal server error" });
+        console.error("Delete error:", error);
+        res.status(500).json({ message: "Error deleting account" });
     }
 });
 
-// Get users by role
-router.get('/users/role/:role', async (req, res) => {
-    const { role } = req.params;
-    try {
-        const users = await User.find({ role });
-        res.json(users);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch users by role' });
-    }
-});
-
-// Secure admin-only route with specific permissions
+// Admin: Get all users
 router.get("/users", authenticateToken, authorizePermissions("manageUsers"), async (req, res) => {
     try {
         const users = await User.find({}, "username email role");
@@ -142,6 +152,7 @@ router.get("/users", authenticateToken, authorizePermissions("manageUsers"), asy
     }
 });
 
+// Admin: Get total users
 router.get("/get-total-users", authenticateToken, authorizePermissions("manageUsers"), async (req, res) => {
     try {
         const userCount = await User.countDocuments();
@@ -151,14 +162,36 @@ router.get("/get-total-users", authenticateToken, authorizePermissions("manageUs
     }
 });
 
+// Admin: Get users by role
 router.get("/users/role/:role", authenticateToken, authorizePermissions("manageUsers"), async (req, res) => {
     const { role } = req.params;
     try {
         const users = await User.find({ role });
         res.json(users);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch users by role' });
+        res.status(500).json({ error: "Failed to fetch users by role" });
     }
 });
+
+// Route to switch user role between author and reader
+router.patch("/switch-role", authenticateToken, async (req, res) => {
+    try {
+      const user = await User.findById(req.user.id);
+  
+      if (!user) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+  
+      user.role = user.role === "author" ? "user" : "author";
+      await user.save();
+  
+      res.status(200).json({ success: true, role: user.role });
+    } catch (err) {
+      console.error("Error switching role:", err);
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  });
+  
+  
 
 module.exports = router;

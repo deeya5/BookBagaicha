@@ -3,6 +3,30 @@ const Book = require("../models/book");
 const Genre = require("../models/genre"); 
 const Review = require("../models/review"); 
 
+const mongoose = require("mongoose");
+
+exports.deleteUser = async (req, res) => {
+  const { id } = req.params;
+
+  // Check if the ID is a valid ObjectId
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid user ID" });
+  }
+
+  try {
+    // Attempt to find and delete the user
+    const user = await User.findByIdAndDelete(id);
+    
+    // If the user is not found, return a 404 error
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ message: "User deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete user" });
+  }
+};
 
 exports.getAllUsers = async (req, res) => {
   try {
@@ -36,14 +60,22 @@ exports.updateUser = async (req, res) => {
   }
 };
 
-exports.deleteUser = async (req, res) => {
-  try {
-    await User.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: "User deleted" });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to delete user" });
-  }
-};
+// exports.deleteUser = async (req, res) => {
+//     const { id } = req.params;
+//     if (!mongoose.Types.ObjectId.isValid(id)) {
+//       return res.status(400).json({ message: "Invalid user ID" });
+//     }
+//     try {
+//       const user = await User.findByIdAndDelete(id);
+//       if (!user) {
+//         return res.status(404).json({ message: "User not found" });
+//       }
+//       res.status(200).json({ message: "User deleted" });
+//     } catch (error) {
+//       res.status(500).json({ message: "Failed to delete user" });
+//     }
+//   };
+  
 
 exports.getAllBooks = async (req, res) => {
   try {

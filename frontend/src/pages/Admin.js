@@ -78,10 +78,14 @@ const Admin = () => {
   }, [navigate, token, role, allowedRoles]);
   
   const rolePermissions = {
-    admin_user: ["users", "authors"],
-    admin_book: ["books", "genres", "reviews"],
-    super_admin: ["users", "authors", "books", "genres", "reviews", "admins"]
+    "users": userRole === "super_admin" || userRole === "user-admin",
+    "books": userRole === "super_admin" || userRole === "book-admin",
+    "genres": userRole === "super_admin" || userRole === "genre-admin",
+    "authors": userRole === "super_admin" || userRole === "author-admin",
+    "reviews": userRole === "super_admin" || userRole === "review-admin",
+    "admins": userRole === "super_admin",
   };
+
 
   const handleViewChange = (view, fetchFn) => {
     if (!rolePermissions[role]?.includes(view)) {
@@ -157,7 +161,9 @@ const Admin = () => {
 
   const deleteItem = async (type, id) => {
     try {
-      await axios.delete(`http://localhost:1000/api/v1/${type}s/${id}`, {
+      const url = `http://localhost:1000/api/v1/${type}s/${id}`;
+      console.log("DELETE URL:", url); // Debug here
+      await axios.delete(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
       reload(type);
@@ -165,6 +171,7 @@ const Admin = () => {
       console.error(`Error deleting ${type}:`, err);
     }
   };
+  
 
   const reload = (type) => {
     switch (type) {
@@ -180,8 +187,9 @@ const Admin = () => {
   const handleSubmit = async () => {
     try {
       const url = formId
-        ? `http://localhost:1000/api/v1/update-${formType}/${formId}`
-        : `http://localhost:1000/api/v1/create-${formType}`;
+        ? `http://localhost:1000/api/v1/${formType}s/${formId}`
+        : `http://localhost:1000/api/v1/${formType}s`;
+
       const method = formId ? "put" : "post";
   
       await axios[method](url, form, { headers: { Authorization: `Bearer ${token}` } });
@@ -197,6 +205,32 @@ const Admin = () => {
       toast.error(`Failed to ${formId ? "update" : "create"} ${formType}.`);
     }
   };
+
+  const fetchBooksToApprove = async () => {
+    try {
+      const res = await axios.get("http://localhost:1000/api/v1/get-pending-books", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setBooks(res.data.books || []);
+    } catch (err) {
+      console.error("Error fetching unapproved books:", err);
+    }
+  };
+
+  const approveBook = async (bookId) => {
+    try {
+      await axios.put(`http://localhost:1000/api/v1/approve-book/${bookId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Book approved successfully!");
+      fetchBooksToApprove(); // refresh the list
+    } catch (err) {
+      console.error("Error approving book:", err);
+      toast.error("Failed to approve book.");
+    }
+  };
+  
+  
   
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -252,6 +286,8 @@ const Admin = () => {
         <button onClick={() => handleViewChange("genres", fetchGenres)}>Genres</button>
         <button onClick={() => handleViewChange("reviews", fetchReviews)}>Ratings & Reviews</button>
         <button onClick={() => handleViewChange("admins", fetchAllAdmins)}>Admins</button>
+        <button onClick={() => handleViewChange("booksToApprove", fetchBooksToApprove)}>Books to Approve</button>
+
         </nav>
       </aside>
   
@@ -448,6 +484,41 @@ const Admin = () => {
             </table>
           </section>
         )}
+
+{currentView === "booksToApprove" && (
+  <section className="pending-books-section">
+    <h2>Books Pending Approval</h2>
+    {books.length === 0 ? (
+      <p>No pending books.</p>
+    ) : (
+      <table className="books-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Genre</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {books.map((book) => (
+            <tr key={book._id}>
+              <td>{book.title}</td>
+              <td>{book.author}</td>
+              <td>{book.genre?.name || "N/A"}</td>
+              <td>
+                <button onClick={() => approveBook(book._id)}>Approve</button>
+                <button onClick={() => deleteItem("book", book._id)}>Delete</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )}
+  </section>
+)}
+
+
       </main>
 
       {isModalOpen && (

@@ -83,11 +83,25 @@ const Header = () => {
     navigate("/login"); // Redirect to login
   };
 
-  const toggleAuthorMode = () => {
-    const newAuthorState = !isAuthor;
-    setIsAuthor(newAuthorState);
-    localStorage.setItem("isAuthor", newAuthorState);
+  const toggleAuthorMode = async () => {
+    const token = localStorage.getItem("authToken");
+    try {
+      const response = await axios.patch("http://localhost:1000/api/v1/switch-role", {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+  
+      const newRole = response.data.role;
+      const isNowAuthor = newRole === "author";
+      setIsAuthor(isNowAuthor);
+      localStorage.setItem("isAuthor", isNowAuthor.toString());
+  
+      // Optional: reload page or give user feedback
+    } catch (err) {
+      console.error("Error switching role:", err);
+    }
   };
+  
 
   // Handle Search
   const handleSearchChange = async (e) => {

@@ -38,8 +38,12 @@ const bookSchema = new mongoose.Schema(
     content: {
       type: String,
       required: false, // allow existing books without content
-    }
-    
+    },
+    approved: {
+      type: Boolean,
+      default: false,
+    },
+
   },
   { timestamps: true }
 );

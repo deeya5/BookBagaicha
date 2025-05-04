@@ -2,6 +2,8 @@ const router = require("express").Router();
 const User = require("../models/user");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
+const multer = require("multer");
+const path = require("path");
 const Book = require("../models/book");
 const { authenticateToken } = require("./userAuth");
 const Genre = require("../models/genre");
@@ -28,6 +30,7 @@ router.post("/add-book", authenticateToken, async (req, res) => {
       author: req.body.author,
       genre: genre._id,
       desc: req.body.desc,
+      approved: false,
     });
 
     await book.save();
@@ -50,6 +53,7 @@ router.put("/update-book", authenticateToken, async (req, res) => {
       author: req.body.author,
       genre: req.body.genre,
       desc: req.body.desc,
+      approved: false,
     });
     return res.status(200).json({ message: "Book updated successfully" });
   } catch (error) {
@@ -139,6 +143,100 @@ router.get("/search-books", async (req, res) => {
   } catch (error) {
     console.error("Error searching books:", error);
     res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/fetch-book-content", authenticateToken, async (req, res) => {
+  try {
+    const { url } = req.query;
+    if (!url) return res.status(400).json({ message: "URL is required" });
+
+    const response = await axios.get(url);
+    res.send(response.data);
+  } catch (error) {
+    console.error("Failed to fetch external book content:", error);
+    res.status(500).json({ message: "Failed to fetch book content" });
+  }
+});
+
+// Storage configuration
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/pdfs/");
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  },
+});
+
+const upload = multer({ storage });
+
+router.post("/upload", upload.single("pdf"), async (req, res) => {
+  try {
+    const { title, author, genre, desc, coverImage, content } = req.body;
+    const url = `/uploads/pdfs/${req.file.filename}`;
+
+    const newBook = new Book({
+      title,
+      author,
+      genre,
+      desc,
+      coverImage,
+      content,
+      url,
+    });
+
+    await newBook.save();
+    res.status(201).json({ message: "Book uploaded", book: newBook });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post("/upload", upload.single("pdf"), async (req, res) => {
+  try {
+    // Handling book upload
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get("/get-pending-books", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.headers;
+    const user = await User.findById(id);
+    if (user.role !== "admin") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const pendingBooks = await Book.find({ approved: false }).populate("genre");
+    return res.status(200).json({ status: "Success", data: pendingBooks });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching pending books" });
+  }
+});
+
+router.put("/approve-book/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id: userId } = req.headers;
+    const user = await User.findById(userId);
+    if (user.role !== "admin") {
+      return res.status(403).json({ message: "Only admins can approve books" });
+    }
+
+    const { id } = req.params;
+    const book = await Book.findById(id);
+
+    if (!book) {
+      return res.status(404).json({ message: "Book not found" });
+    }
+
+    book.approved = true;
+    await book.save();
+
+    res.status(200).json({ message: "Book approved successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to approve book" });
   }
 });
 
