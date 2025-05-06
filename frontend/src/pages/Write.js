@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import "../styles/write.css"; // reuse your style
+import "../styles/write.css"; 
 
 const UploadBook = () => {
   const [title, setTitle] = useState("");
@@ -9,7 +9,6 @@ const UploadBook = () => {
   const [desc, setDesc] = useState("");
   const [coverImage, setCoverImage] = useState(null); // Now for file upload
   const [pdfFile, setPdfFile] = useState(null);
-  const [content, setContent] = useState("");
 
   const handleUpload = async () => {
     if (!pdfFile || !coverImage) return alert("Please select a PDF and a cover image.");
@@ -21,7 +20,6 @@ const UploadBook = () => {
     formData.append("genre", genre); // User types the genre
     formData.append("desc", desc);
     formData.append("coverImage", coverImage); // Cover image file
-    formData.append("content", content);
 
     try {
       await axios.post("http://localhost:1000/api/v1/upload", formData, {

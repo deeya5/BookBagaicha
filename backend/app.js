@@ -64,7 +64,6 @@ app.use("/api/v1", activityRoutes);
 app.use("/api/v1/library", libraryRoutes);
 app.use("/api/v1/reviews", reviewRoutes);
 app.use("/admin", adminRoutes);
-app.use("/uploads", express.static("uploads"));
 
 
 // Debugging Log to check if user routes are loaded

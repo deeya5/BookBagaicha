@@ -161,43 +161,48 @@ router.get("/fetch-book-content", authenticateToken, async (req, res) => {
 
 // Storage configuration
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: function (req, file, cb) {
     cb(null, "uploads/pdfs/");
   },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + file.originalname;
+    cb(null, uniqueSuffix);
   },
 });
 
 const upload = multer({ storage });
-
-router.post("/upload", upload.single("pdf"), async (req, res) => {
+router.post("/upload", upload.fields([
+  { name: "pdf", maxCount: 1 },
+  { name: "coverImage", maxCount: 1 },
+]), async (req, res) => {
   try {
-    const { title, author, genre, desc, coverImage, content } = req.body;
-    const url = `/uploads/pdfs/${req.file.filename}`;
+    console.log("REQ FILES:", req.files);
+    console.log("REQ BODY:", req.body);
 
-    const newBook = new Book({
-      title,
-      author,
-      genre,
-      desc,
-      coverImage,
-      content,
-      url,
-    });
+   // Find genre by name (case-insensitive)
+   let genreDoc = await Genre.findOne({ name: new RegExp(`^${req.body.genre}$`, 'i') });
+
+   if (!genreDoc) {
+     genreDoc = new Genre({ name: req.body.genre });
+     await genreDoc.save();
+   }
+   
+   const newBook = new Book({
+     title: req.body.title,
+     author: req.body.author,
+     genre: genreDoc._id,
+     desc: req.body.desc,
+     url: `/uploads/pdfs/${req.files.pdf[0].filename}`,
+     coverImage: `/uploads/pdfs/${req.files.coverImage[0].filename}`,
+   });
+   
 
     await newBook.save();
-    res.status(201).json({ message: "Book uploaded", book: newBook });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+    res.status(201).json({ message: "Book uploaded successfully" });
 
-router.post("/upload", upload.single("pdf"), async (req, res) => {
-  try {
-    // Handling book upload
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    console.error("UPLOAD ERROR:", err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
