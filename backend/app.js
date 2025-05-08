@@ -57,7 +57,7 @@ app.use("/api/v1", userRoutes);
 app.use("/api/v1", bookRoutes);
 app.use("/api/v1", favouriteRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/uploads", express.static("uploads"));
+app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 app.use("/api/v1", uploadRoutes);
 app.use("/api/v1", genreRoutes);
 app.use("/api/v1", activityRoutes);

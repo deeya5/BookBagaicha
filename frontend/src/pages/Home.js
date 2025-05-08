@@ -138,10 +138,10 @@ const Home = () => {
                 onClick={() => navigate(`/book/${book.id || book._id}`, { state: { book } })}
               >
               <img
-          className="book-image"
-          src={book.coverImage || "https://via.placeholder.com/150"}
-          alt={book.title}
-        />
+        src={book.coverImage.startsWith("http") ? book.coverImage : `http://localhost:1000${book.coverImage}`}
+        alt={book.title}
+        className="book-cover"
+      />
 
                 <h3>{book.title}</h3>
                 <p>by {book.author}</p>

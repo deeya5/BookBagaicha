@@ -247,6 +247,7 @@ const handleSaveBook = async (book) => {
       </div>
     );
   };
+  console.log(book); 
 
   if (!book) return <p>Book details not found.</p>;
 
@@ -264,11 +265,14 @@ const handleSaveBook = async (book) => {
 
       {/* === Book Info Section === */}
       <div className="book-detail-container">
-        <img
-          className="book-image"
-          src={book.coverImage || "https://via.placeholder.com/150"}
-          alt={book.title}
-        />
+      <img
+        src={book.coverImage.startsWith("http") ? book.coverImage : `http://localhost:1000${book.coverImage}`}
+        alt={book.title}
+        className="book-cover"
+      />
+
+
+
         <div className="book-info">
           <h1 className="book-title">{book.title}</h1>
           <h3 className="book-author">by {book.author}</h3>
@@ -367,10 +371,10 @@ const handleSaveBook = async (book) => {
                 onClick={() => navigate(`/book/${book._id}`, { state: { book } })}
               >
                 <img
-                  className="book-image"
-                  src={book.coverImage || "https://via.placeholder.com/150"}
-                  alt={book.title}
-                />
+        src={book.coverImage.startsWith("http") ? book.coverImage : `http://localhost:1000${book.coverImage}`}
+        alt={book.title}
+        className="book-cover"
+      />
                 <h3>{book.title}</h3>
                 <p>by {book.author}</p>
               </div>
