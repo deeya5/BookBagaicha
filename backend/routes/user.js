@@ -192,6 +192,21 @@ router.patch("/switch-role", authenticateToken, async (req, res) => {
     }
   });
   
+  // Promote user to author
+router.put("/become-author", authenticateToken, async (req, res) => {
+    try {
+      const { id } = req.headers;
+      const user = await User.findById(id);
+      if (!user) return res.status(404).json({ message: "User not found" });
+  
+      user.role = "author";
+      await user.save();
+  
+      res.status(200).json({ message: "Role updated to author" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update role" });
+    }
+  });
   
 
 module.exports = router;

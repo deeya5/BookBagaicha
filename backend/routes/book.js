@@ -7,7 +7,9 @@ const path = require("path");
 const Book = require("../models/book");
 const { authenticateToken } = require("./userAuth");
 const Genre = require("../models/genre");
-const { fetchBooksFromGutendex } = require("../controllers/bookController"); // Import function properly
+const { fetchBooksFromGutendex } = require("../controllers/bookController"); // importing function
+const fs = require('fs');
+
 
 // Add book by admin
 router.post("/add-book", authenticateToken, async (req, res) => {
@@ -159,6 +161,18 @@ router.get("/fetch-book-content", authenticateToken, async (req, res) => {
   }
 });
 
+// Get books uploaded by the logged-in user
+router.get("/my-books", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.headers;
+    const books = await Book.find({ uploader: id }).populate("genre");
+    return res.status(200).json({ status: "Success", data: books });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching user's books" });
+  }
+});
+
+
 // Storage configuration
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -242,6 +256,48 @@ router.put("/approve-book/:id", authenticateToken, async (req, res) => {
     res.status(200).json({ message: "Book approved successfully" });
   } catch (error) {
     res.status(500).json({ message: "Failed to approve book" });
+  }
+});
+
+// GET /api/books/download/:bookId
+router.get('/download/:bookId', async (req, res) => {
+  const { bookId } = req.params;
+
+  const downloadUrl = `https://www.gutenberg.org/files/${bookId}/${bookId}-0.txt`; // Plain text version
+
+  try {
+    const response = await axios.get(downloadUrl, { responseType: 'stream' });
+
+    const filePath = path.join(__dirname, `../downloads/${bookId}.txt`);
+
+    // Save to local file system
+    const writer = fs.createWriteStream(filePath);
+    response.data.pipe(writer);
+
+    writer.on('finish', () => {
+      res.json({ success: true, message: 'Book saved for offline reading.' });
+    });
+
+    writer.on('error', () => {
+      res.status(500).json({ error: 'Failed to save the book.' });
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: 'Failed to fetch book content.' });
+  }
+});
+
+// GET /api/books/content/:bookId
+router.get('/content/:bookId', async (req, res) => {
+  const { bookId } = req.params;
+  const downloadUrl = `https://www.gutenberg.org/files/${bookId}/${bookId}-0.txt`; // fallback format
+
+  try {
+    const response = await axios.get(downloadUrl);
+    res.send(response.data); // Send plain text content
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: 'Failed to fetch book content.' });
   }
 });
 

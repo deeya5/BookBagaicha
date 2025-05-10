@@ -4,7 +4,7 @@ import "../styles/bookDetail.css";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { saveBook } from "../utils/offlineDB";
+import { saveBookToIndexedDB } from "../utils/offlineDB";
 
 const BookDetail = () => {
   const { state } = useLocation();
@@ -20,6 +20,10 @@ const BookDetail = () => {
   const [editReviewId, setEditReviewId] = useState(null);
   const [editComment, setEditComment] = useState("");
   const [editRating, setEditRating] = useState(0);
+
+  const location = useLocation();
+  const { offlineBook } = location.state || {};
+
 
 
   const token = localStorage.getItem("authToken");
@@ -71,20 +75,13 @@ const BookDetail = () => {
   useEffect(() => {
     if (!book && bookId) {
       fetchBookDetails(bookId);
-    } else if (book) {
+    } else if (book?._id) {
       fetchFeaturedBooks(book._id);
       fetchReviews(book._id);
     }
   }, [book, bookId, fetchFeaturedBooks]);
   
 
-// Fetch reviews and featured books once book is available
-useEffect(() => {
-  if (book?._id) {
-    fetchFeaturedBooks(book._id);
-    fetchReviews(book._id);
-  }
-}, [book?._id, fetchFeaturedBooks]);
 
 const handleReadClick = async () => {
   if (!isLoggedIn) {
@@ -129,29 +126,32 @@ console.log("userId", user?._id);
 // console.log("📦 Payload being sent:", {
 //   bookId,
 // });
+//console.log('Book object before saving:', book);
 
-const handleSaveBook = async (book) => {
-  try {
-    console.log("book in handleSaveBook", book);
-    if (!book.content) {
-      throw new Error("No book content available.");
-    }
+const handleSaveBook = () => {
+  const isPdf = book.url.endsWith(".pdf"); // uploaded user book
+  const isTxt = book.url.endsWith(".txt"); // Gutendex book
 
-    const offlineBook = {
-      id: book._id,
-      title: book.title,
-      author: book.author,
-      description: book.desc || '',
-      content: book.content,
-    };
-
-    await saveBook(offlineBook);
-    toast.success("Book saved for offline reading!");
-  } catch (err) {
-    console.error("Failed to save book:", err);
-    toast.error("Failed to save book for offline reading.");
+  if (!isPdf && !isTxt) {
+    alert("This book format is not supported for offline save.");
+    return;
   }
+
+  const bookData = {
+    id: book._id || book.id,
+    title: book.title,
+    author: book.author,
+    genre: book.genre,
+    coverImage: book.coverImage,
+    url: book.url,
+    format: isPdf ? "pdf" : "txt", // Add format flag
+  };
+
+  saveBookToIndexedDB(bookData);
 };
+
+console.log('Downloading from URL:', book.download_url);
+
 
   const handleAddToLibrary = async () => {
     if (!isLoggedIn) {
@@ -247,7 +247,7 @@ const handleSaveBook = async (book) => {
       </div>
     );
   };
-  console.log(book); 
+  //console.log(book); 
 
   if (!book) return <p>Book details not found.</p>;
 
@@ -294,7 +294,8 @@ const handleSaveBook = async (book) => {
               Add To Library
             </button>
 
-            <button className="button save-offline" onClick={() => handleSaveBook(book)}>Save Offline</button>
+            <button className="button save-offline" onClick={handleSaveBook}>Save Offline</button>
+
 
 
           </div>
@@ -371,10 +372,10 @@ const handleSaveBook = async (book) => {
                 onClick={() => navigate(`/book/${book._id}`, { state: { book } })}
               >
                 <img
-        src={book.coverImage.startsWith("http") ? book.coverImage : `http://localhost:1000${book.coverImage}`}
-        alt={book.title}
-        className="book-cover"
-      />
+                src={book.coverImage.startsWith("http") ? book.coverImage : `http://localhost:1000${book.coverImage}`}
+                alt={book.title}
+                className="book-cover"
+              />
                 <h3>{book.title}</h3>
                 <p>by {book.author}</p>
               </div>

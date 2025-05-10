@@ -219,9 +219,12 @@ const Header = () => {
             </>
           ) : (
             <>
+              {!isAuthor && (
               <button className="menu-button" onClick={toggleAuthorMode}>
-                {isAuthor ? "Switch to Reader" : "Switch to Author"}
+                Switch to Author
               </button>
+            )}
+
               <button className="menu-button" onClick={handleLogout}>Logout</button>
             </>
           )}

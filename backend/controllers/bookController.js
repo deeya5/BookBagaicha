@@ -1,4 +1,6 @@
 const axios = require("axios");
+const Book = require("../models/book");
+const Genre = require("../models/genre");
 
 const detectGenre = (subjects) => {
   const genreMap = {
@@ -29,33 +31,53 @@ const detectGenre = (subjects) => {
 const fetchBooksFromGutendex = async (req, res) => {
   try {
     const response = await axios.get("https://gutendex.com/books/");
-    const books = response.data.results.map((book) => {
-      // Get the book content URL, prefer text/plain (if available)
-      const contentUrl = book.formats["text/plain"] ||
-                         book.formats["text/html"] ||
-                         null;
+    const booksData = response.data.results;
 
-      // If no valid content URL exists, skip this book or handle accordingly
+    const savedBooks = [];
+
+    for (const book of booksData) {
+      const formats = book.formats;
+      const contentUrl =
+        formats["text/plain; charset=utf-8"] ||
+        formats["text/plain"] ||
+        formats["application/epub+zip"] ||
+        formats["application/x-mobipocket-ebook"] ||
+        formats["text/html; charset=utf-8"] ||
+        formats["text/html"] ||
+        null;
+
       if (!contentUrl) {
-        console.log(`No content URL available for book: ${book.title}`);
-        return null;
+        console.log(`No content URL for book: ${book.title}`);
+        continue;
       }
 
-      return {
+      const genreName = detectGenre(book.subjects || []);
+      let genre = await Genre.findOne({ name: genreName });
+
+      // If genre doesn't exist, create it
+      if (!genre) {
+        genre = await Genre.create({ name: genreName });
+      }
+
+      const newBook = new Book({
         title: book.title,
         author: book.authors.length ? book.authors[0].name : "Unknown",
-        url: contentUrl, // ✅ The content URL
-        coverImage: book.formats["image/jpeg"] || "",
-        genre: detectGenre(book.subjects || []), // 🔍 Use the helper here
+        url: contentUrl,
+        coverImage: formats["image/jpeg"] || "",
+        genre: genre._id,
         desc: book.subjects.join(", ") || "No description available",
-      };
-    }).filter(book => book !== null); // Filter out books with no valid content URL
+      });
 
-    res.json({ success: true, data: books });
+      const savedBook = await newBook.save();
+      savedBooks.push(savedBook);
+    }
+
+    res.json({ success: true, data: savedBooks });
   } catch (error) {
-    console.error("Error fetching books:", error);
-    res.status(500).json({ success: false, message: "Failed to fetch books" });
+    console.error("Error fetching or saving books:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch/save books" });
   }
 };
+
 
 module.exports = { fetchBooksFromGutendex };
