@@ -1,37 +1,195 @@
+/* Profile.css */
+
+/* Global styles */
 .profile-page {
-    padding: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  background-color: #f7faf7;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+h1 {
+  color: #2e573a;
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  padding-bottom: 0.75rem;
+}
+
+h1:after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, #4CAF50, #2e573a);
+  border-radius: 2px;
+}
+
+h2 {
+  color: #4CAF50;
+  font-size: 1.8rem;
+  margin: 1.5rem 0 1rem;
+}
+
+/* Book list styling */
+.my-books {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease;
+}
+
+.my-books:hover {
+  transform: translateY(-4px);
+}
+
+.my-books ul {
+  list-style: none;
+  padding: 0;
+}
+
+.my-books li {
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  background-color: #f2f9f2;
+  border-left: 4px solid #4CAF50;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.my-books li:before {
+  content: "🌿";
+  margin-right: 10px;
+  font-size: 1.2rem;
+}
+
+.my-books li:hover {
+  background-color: #e6f4e6;
+  transform: translateX(5px);
+}
+
+.my-books p {
+  color: #6a8a6a;
+  font-style: italic;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+/* Reader profile styling */
+.start-profile {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.start-profile p {
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+  color: #6a8a6a;
+}
+
+/* Button styling */
+button {
+  padding: 0.8rem 1.5rem;
+  background: linear-gradient(135deg, #4CAF50, #2e7d32);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2);
+  margin: 0 0.5rem;
+}
+
+button:hover {
+  background: linear-gradient(135deg, #2e7d32, #4CAF50);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(76, 175, 80, 0.3);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Modal popup styling */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(3px);
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.popup-box {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  max-width: 500px;
+  width: 90%;
+  animation: slideUp 0.4s ease;
+  position: relative;
+  text-align: center;
+  border-top: 5px solid #4CAF50;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.popup-box p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  color: #2e573a;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 1.5rem;
   }
   
-  .my-books ul {
-    list-style: none;
-    padding: 0;
+  h1 {
+    font-size: 2rem;
   }
   
-  .start-profile button {
-    padding: 0.5rem 1rem;
-    background: #0066cc;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .popup-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.4);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  h2 {
+    font-size: 1.5rem;
   }
   
   .popup-box {
-    background: white;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0px 2px 10px rgba(0,0,0,0.2);
+    padding: 1.5rem;
   }
   
+  button {
+    width: 100%;
+    margin: 0.5rem 0;
+  }
+}

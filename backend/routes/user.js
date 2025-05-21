@@ -8,7 +8,7 @@ const logActivity = require("../controllers/activityLog");
 const authorizePermissions = require("../middleware/authorizePermissions");
 const rolesPermissions = require("../config/permissions");
 
-// Sign Up
+// Updated Signup Route
 router.post("/sign-up", async (req, res) => {
     try {
         const { username, email, password, role } = req.body;
@@ -42,9 +42,19 @@ router.post("/sign-up", async (req, res) => {
         });
         await newUser.save();
 
+        // Generate token just like in sign-in route
+        const authClaims = { id: newUser.id, username: newUser.username, role: newUser.role };
+        const token = jwt.sign(authClaims, "bookbagaicha5", { expiresIn: "30d" });
+
         await logActivity("User signed up", newUser._id, `Email: ${email}`);
 
-        return res.status(200).json({ message: "SignUp Successful" });
+        // Return the same data structure as the sign-in route
+        return res.status(200).json({
+            id: newUser.id,
+            username: newUser.username,
+            role: newUser.role,
+            token
+        });
 
     } catch (error) {
         console.error("Signup error:", error);

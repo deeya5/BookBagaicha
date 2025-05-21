@@ -1,40 +1,58 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
-import "../styles/write.css"; 
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import "../styles/write.css";
 
 const UploadBook = () => {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [genre, setGenre] = useState("");
   const [desc, setDesc] = useState("");
-  const [coverImage, setCoverImage] = useState(null); // Now for file upload
+  const [coverImage, setCoverImage] = useState(null);
   const [pdfFile, setPdfFile] = useState(null);
 
   const handleUpload = async () => {
-    if (!pdfFile || !coverImage) return alert("Please select a PDF and a cover image.");
+    if (!pdfFile || !coverImage) {
+      toast.error("Please select both a book file and a cover image.");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("pdf", pdfFile);
     formData.append("title", title);
     formData.append("author", author);
-    formData.append("genre", genre); // User types the genre
+    formData.append("genre", genre);
     formData.append("desc", desc);
-    formData.append("coverImage", coverImage); // Cover image file
+    formData.append("coverImage", coverImage);
 
     try {
-      await axios.post("http://localhost:1000/api/v1/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      alert("Book uploaded successfully!");
+      const token = localStorage.getItem("authToken");
+
+await axios.post("http://localhost:1000/api/v1/upload", formData, {
+  headers: {
+    "Content-Type": "multipart/form-data",
+    Authorization: `Bearer ${token}`,
+  },
+});
+
+      toast.success("Book uploaded successfully!");
+      setTitle("");
+      setAuthor("");
+      setGenre("");
+      setDesc("");
+      setCoverImage(null);
+      setPdfFile(null);
     } catch (err) {
       console.error(err);
-      alert("Failed to upload book.");
+      toast.error("Failed to upload book.");
     }
   };
 
   return (
     <div className="write-container">
-      <h1 className="write-header">Share your Story!</h1>
+      <ToastContainer />
+      <h1 className="write-header">Share Your Story</h1>
 
       <input
         type="text"
@@ -60,12 +78,11 @@ const UploadBook = () => {
         className="title-input"
       />
 
-      {/* File input for cover image */}
+      <label className="file-label">Upload Your Book Cover</label>
       <input
         type="file"
         accept="image/*"
         onChange={(e) => setCoverImage(e.target.files[0])}
-        className="title-input"
       />
 
       <textarea
@@ -75,12 +92,11 @@ const UploadBook = () => {
         className="content-area"
       />
 
-      {/* File input for PDF */}
+      <label className="file-label">Upload Your Book File (PDF)</label>
       <input
         type="file"
         accept="application/pdf"
         onChange={(e) => setPdfFile(e.target.files[0])}
-        className="title-input"
       />
 
       <button className="save-button" onClick={handleUpload}>

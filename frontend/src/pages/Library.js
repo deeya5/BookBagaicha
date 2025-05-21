@@ -26,7 +26,7 @@ const Library = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-
+        
         const books = response.data;
 
         if (Array.isArray(books) && books.length) {
@@ -88,9 +88,17 @@ const Library = () => {
         onClick={() => navigate(`/book/${book._id}`, { state: { book } })}
       >
         <img
-          className="book-cover"
-          src={book.coverImage || "https://via.placeholder.com/150"}
+          src={
+            book.coverImage?.startsWith("http")
+              ? book.coverImage
+              : `http://localhost:1000${book.coverImage}`
+          }
           alt={book.title}
+          className="book-cover"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = "/default-book.jpg"; // fallback if image is missing
+          }}
         />
         <div className="book-info">
           <h3>{book.title}</h3>

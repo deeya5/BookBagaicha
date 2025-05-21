@@ -4,18 +4,16 @@ import axios from "axios";
 import "../styles/Header.css";
 import logo from "../assets/logo.png";
 
-
 const Header = () => {
   const [showSidebar, setShowSidebar] = useState(false);
   const [userName, setUserName] = useState(localStorage.getItem("username") || "");
   const [avatar, setAvatar] = useState(localStorage.getItem("avatar") || "");
   const [isAuthor, setIsAuthor] = useState(localStorage.getItem("isAuthor") === "true");
-  const [searchQuery, setSearchQuery] = useState("");  // Search input state
-  const [searchResults, setSearchResults] = useState([]); // Search results state
-  const [noResults, setNoResults] = useState(false); // To track if no results found
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [noResults, setNoResults] = useState(false);
   const navigate = useNavigate();
   const searchRef = useRef(null);
-
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -30,8 +28,6 @@ const Header = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-  
-
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -80,7 +76,7 @@ const Header = () => {
     setIsAuthor(false);
     toggleSidebar();
     window.dispatchEvent(new Event("storage"));
-    navigate("/login"); // Redirect to login
+    navigate("/login");
   };
 
   const toggleAuthorMode = async () => {
@@ -90,20 +86,15 @@ const Header = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-  
       const newRole = response.data.role;
       const isNowAuthor = newRole === "author";
       setIsAuthor(isNowAuthor);
       localStorage.setItem("isAuthor", isNowAuthor.toString());
-  
-      // Optional: reload page or give user feedback
     } catch (err) {
       console.error("Error switching role:", err);
     }
   };
-  
 
-  // Handle Search
   const handleSearchChange = async (e) => {
     const query = e.target.value;
     setSearchQuery(query);
@@ -130,7 +121,6 @@ const Header = () => {
 
   const handleSearchKeyPress = (e) => {
     if (e.key === "Enter") {
-      // Redirect to search results page or show results in a modal, etc.
       navigate(`/search-results?query=${searchQuery}`);
     }
   };
@@ -138,54 +128,65 @@ const Header = () => {
   return (
     <>
       <header className="header">
-        <div className="logo">
-          <Link to="/">
-            <img src={logo} alt="Book Bagaicha Logo" />
-          </Link>
-        </div>
-        <nav className="nav-links">
-          <ul>
-            <li><Link to="/">Home</Link></li>
-            <li><Link to="/explore">Explore</Link></li>
-            <li><Link to="/genre">Genre</Link></li>
-            {isAuthor && <li><Link to="/write">Write</Link></li>}
-          </ul>
-        </nav>
-        <div className="header-actions">
-        <div className="search-container" ref={searchRef}>
-  <input
-    type="text"
-    className="search-bar"
-    placeholder="Search..."
-    value={searchQuery}
-    onChange={handleSearchChange}
-    onKeyDown={handleSearchKeyPress}
-  />
-  {searchQuery && (
-    <div className={`search-results ${searchResults.length > 0 || noResults ? 'visible' : ''}`}>
-      {searchResults.length > 0 ? (
-        <ul>
-          {searchResults.map((book) => (
-            <li key={book._id}>
-              <Link to={`/book/${book._id}`} onClick={() => setSearchQuery("")}>
-                {book.title}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      ) : noResults ? (
-        <div className="no-results">No results found</div>
-      ) : null}
-    </div>
-  )}
-</div>
+        <div className="header-container">
+          <div className="logo">
+            <Link to="/">
+              <img src={logo} alt="Book Bagaicha Logo" />
+            </Link>
+          </div>
+          
+          <nav className="nav-links">
+            <ul>
+              <li><Link to="/">Home</Link></li>
+              <li><Link to="/explore">Explore</Link></li>
+              <li><Link to="/genre">Genre</Link></li>
+              {isAuthor && <li><Link to="/write">Write</Link></li>}
+            </ul>
+          </nav>
+          
+          <div className="header-actions">
+            <div className="search-container" ref={searchRef}>
+              <input
+                type="text"
+                className="search-bar"
+                placeholder="Search books..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onKeyDown={handleSearchKeyPress}
+              />
+              <i className="fas fa-search search-icon"></i>
+              
+              {searchQuery && (
+                <div className={`search-results ${searchResults.length > 0 || noResults ? 'visible' : ''}`}>
+                  {searchResults.length > 0 ? (
+                    <ul>
+                      {searchResults.map((book) => (
+                        <li key={book._id}>
+                          <Link 
+                            to={`/book/${book._id}`} 
+                            state={{ book }} 
+                            onClick={() => setSearchQuery("")}
+                          >
+                            {book.title}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : noResults ? (
+                    <div className="no-results">No results found</div>
+                  ) : null}
+                </div>
+              )}
+            </div>
 
-          <Link to="/library" className="book-icon">
-            <i className="fas fa-book"></i>
-          </Link>
-          <button className="user-icon" onClick={toggleSidebar}>
-            <i className="fas fa-user-circle"></i>
-          </button>
+            <button className="user-icon" onClick={toggleSidebar}>
+              {avatar ? (
+                <img className="avatar-small" src={avatar} alt="Profile" />
+              ) : (
+                <i className="fas fa-user-circle"></i>
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -204,9 +205,15 @@ const Header = () => {
           )}
           {userName && (
             <div className="profile-links">
-              <Link to="/profile" onClick={toggleSidebar}>My Profile</Link>
-              <Link to="/my-books" onClick={toggleSidebar}>My Books</Link>
-              <Link to="/settings" onClick={toggleSidebar}>Settings</Link>
+              <Link to="/profile" onClick={toggleSidebar}>
+                <i className="fas fa-user"></i> My Profile
+              </Link>
+              <Link to="/library" onClick={toggleSidebar}>
+                <i className="fas fa-book"></i> My Library
+              </Link>
+              <Link to="/settings" onClick={toggleSidebar}>
+                <i className="fas fa-cog"></i> Settings
+              </Link>
             </div>
           )}
         </div>
@@ -215,17 +222,18 @@ const Header = () => {
           {!userName ? (
             <>
               <Link to="/login" className="menu-button" onClick={toggleSidebar}>Login</Link>
-              <Link to="/signup" className="menu-button" onClick={toggleSidebar}>Signup</Link>
+              <Link to="/signup" className="menu-button signup-button" onClick={toggleSidebar}>Signup</Link>
             </>
           ) : (
             <>
               {!isAuthor && (
-              <button className="menu-button" onClick={toggleAuthorMode}>
-                Switch to Author
+                <button className="menu-button author-mode-button" onClick={toggleAuthorMode}>
+                  <i className="fas fa-pen-fancy"></i> Switch to Author
+                </button>
+              )}
+              <button className="menu-button logout-button" onClick={handleLogout}>
+                <i className="fas fa-sign-out-alt"></i> Logout
               </button>
-            )}
-
-              <button className="menu-button" onClick={handleLogout}>Logout</button>
             </>
           )}
         </div>

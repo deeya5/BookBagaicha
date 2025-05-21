@@ -14,5 +14,8 @@
   "dependencies": {
     "@tailwindcss/postcss": "^4.0.14",
     "react-scripts": "^5.0.1"
+  },
+  "devDependencies": {
+    "cypress": "^14.3.3"
   }
 }

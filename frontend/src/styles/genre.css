@@ -1,78 +1,366 @@
-.genre-grid-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 40px 20px;
+/* Genre Page Styling */
+.genre-page {
+  background-color: #fafcf9;
+  min-height: 100vh;
+  padding: 40px 20px 60px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header Section */
+.genre-header {
   text-align: center;
+  max-width: 800px;
+  margin: 0 auto 60px;
+  padding: 20px 0;
 }
 
-.genre-grid-title {
-  color: #006400;
-  font-size: 2.5rem;
-  margin-bottom: 10px;
+.genre-title {
+  color: #4e8c5a;
+  font-size: 2.8rem;
+  font-weight: 700;
+  margin: 0 0 16px;
+  letter-spacing: -0.5px;
+  position: relative;
 }
 
-.genre-subtitle {
-  color: #333;
-  font-size: 1.2rem;
+.genre-description {
+  color: #5a6b60;
+  font-size: 1.25rem;
+  line-height: 1.6;
   margin-bottom: 30px;
+  font-weight: 400;
+}
+
+.genre-divider {
+  position: relative;
+  height: 20px;
+  margin: 30px auto;
+  width: 80%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.genre-divider:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #cfe0d5, transparent);
+}
+
+.divider-icon {
+  position: relative;
+  background-color: #fafcf9;
+  color: #62a06f;
+  font-size: 1.2rem;
+  padding: 0 15px;
+  z-index: 1;
+}
+
+/* Grid Container */
+.genre-grid-container {
+  max-width: 1300px;
+  margin: 0 auto;
 }
 
 .genre-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 30px;
-  justify-items: center;
+  justify-content: center;
 }
 
-.genre-image-button {
-  width: 100%;
-  max-width: 280px;
-  height: 180px;
-  border-radius: 12px;
+/* Genre Card Styling */
+.genre-card {
+  background-color: #ffffff;
+  border-radius: 16px;
   overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
+  height: 260px;
   position: relative;
-  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s ease;
 }
 
-.genre-image-button:hover {
-  transform: scale(1.05);
+.genre-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 35px rgba(98, 160, 111, 0.15);
 }
 
-.genre-image {
+.genre-card-image {
+  height: 200px;
+  position: relative;
+  overflow: hidden;
+}
+
+.genre-card-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.6s ease;
 }
 
-.genre-label {
+.genre-card:hover .genre-card-image img {
+  transform: scale(1.08);
+}
+
+.genre-icon {
   position: absolute;
-  bottom: 10px;
+  top: 15px;
+  right: 15px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4e8c5a;
+  font-size: 1.2rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  opacity: 0.9;
+  transition: all 0.3s ease;
+}
+
+.genre-card:hover .genre-icon {
+  transform: rotate(15deg);
+  color: #3b7f4c;
+  opacity: 1;
+}
+
+.genre-card-content {
+  padding: 16px 20px;
+  position: relative;
+  background-color: #ffffff;
+  transition: all 0.3s ease;
+}
+
+.genre-name {
+  color: #3b4a3f;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  transition: all 0.3s ease;
+}
+
+.genre-card-overlay {
+  position: absolute;
+  top: 0;
   left: 0;
   right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 20px;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.genre-card:hover .genre-card-overlay {
+  opacity: 1;
+}
+
+.explore-text {
+  color: #4e8c5a;
+  font-weight: 600;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+}
+
+.explore-text i {
+  margin-left: 5px;
+  transition: transform 0.3s ease;
+}
+
+.genre-card:hover .explore-text i {
+  transform: translateX(5px);
+}
+
+/* Card Hover Effects for Different Genres */
+.genre-card[data-genre="horror"]:hover {
+  box-shadow: 0 15px 35px rgba(128, 0, 0, 0.1);
+}
+
+.genre-card[data-genre="fantasy"]:hover {
+  box-shadow: 0 15px 35px rgba(75, 0, 130, 0.1);
+}
+
+.genre-card[data-genre="science-fiction"]:hover {
+  box-shadow: 0 15px 35px rgba(0, 50, 200, 0.1);
+}
+
+.genre-card[data-genre="romance"]:hover {
+  box-shadow: 0 15px 35px rgba(255, 105, 180, 0.1);
+}
+
+.genre-card[data-genre="mystery"]:hover {
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+}
+
+/* Loading State */
+.genre-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(98, 160, 111, 0.2);
+  border-top-color: #62a06f;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error State */
+.genre-error {
   text-align: center;
+  padding: 40px 20px;
+  max-width: 500px;
+  margin: 0 auto;
+  background-color: #ffeded;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(255, 0, 0, 0.05);
+}
+
+.genre-error i {
+  color: #e05252;
+  font-size: 2.5rem;
+  margin-bottom: 15px;
+}
+
+.genre-error p {
+  color: #9c4a4a;
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+}
+
+.retry-button {
+  background-color: #e05252;
   color: white;
-  background-color: rgba(0, 0, 0, 0.6);
-  padding: 5px 0;
-  font-weight: bold;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.retry-button:hover {
+  background-color: #cc3d3d;
+  transform: translateY(-2px);
+}
+
+/* Footer */
+.genre-footer {
+  text-align: center;
+  margin-top: 60px;
+  padding-top: 20px;
+  color: #5a6b60;
   font-size: 1rem;
-  border-radius: 0 0 12px 12px;
+}
+
+.genre-footer a {
+  color: #4e8c5a;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.genre-footer a:hover {
+  color: #3b7f4c;
+  text-decoration: underline;
 }
 
 /* Responsive Design */
-@media (max-width: 992px) {
+@media (max-width: 1200px) {
   .genre-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 25px;
   }
 }
 
-@media (max-width: 600px) {
-  .genre-grid {
-    grid-template-columns: 1fr;
+@media (max-width: 768px) {
+  .genre-header {
+    padding: 10px 0;
+    margin-bottom: 40px;
   }
 
-  .genre-image-button {
-    max-width: 100%;
+  .genre-title {
+    font-size: 2.2rem;
+  }
+
+  .genre-description {
+    font-size: 1.1rem;
+  }
+
+  .genre-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+  }
+
+  .genre-card {
+    height: 240px;
+  }
+
+  .genre-card-image {
+    height: 180px;
+  }
+}
+
+@media (max-width: 576px) {
+  .genre-page {
+    padding: 30px 15px 40px;
+  }
+
+  .genre-header {
+    margin-bottom: 30px;
+  }
+
+  .genre-title {
+    font-size: 1.8rem;
+  }
+
+  .genre-description {
+    font-size: 1rem;
+  }
+
+  .genre-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 15px;
+  }
+
+  .genre-card {
+    height: 210px;
+  }
+
+  .genre-card-image {
+    height: 150px;
+  }
+
+  .genre-icon {
+    width: 35px;
+    height: 35px;
+    font-size: 1rem;
+  }
+
+  .genre-name {
+    font-size: 1rem;
   }
 }

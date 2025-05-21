@@ -7,7 +7,7 @@ const path = require("path");
 const Book = require("../models/book");
 const { authenticateToken } = require("./userAuth");
 const Genre = require("../models/genre");
-const { fetchBooksFromGutendex } = require("../controllers/bookController"); // importing function
+const { fetchBooksFromGutendex, getBookById, fetchBookContent} = require("../controllers/bookController"); // importing function
 const fs = require('fs');
 
 
@@ -101,25 +101,46 @@ router.get("/get-recent-books", authenticateToken, async (req, res) => {
   }
 });
 
-// Get book by ID
-router.get("/get-book-by-id/:id", authenticateToken, async (req, res) => {
+// GET: Get all uploaded books (Book Bagaicha Originals)
+router.get("/uploaded-books", async (req, res) => {
   try {
-    const { id } = req.params;
-    console.log("Requested book ID:", id);
-    const book = await Book.findById(id);
-    if (!book) {
-      console.log("Book not found in DB.");
-      return res.status(404).json({ message: "Book not found" });
-    }
+    const books = await Book.find({ url: { $regex: /^\/uploads\/pdfs\// } }).populate("genre", "name");
 
-    return res.json({ status: "Success", data: book });
+    res.status(200).json({
+      message: "Uploaded books fetched successfully",
+      books,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error" });
+    console.error("Error fetching uploaded books:", error);
+    res.status(500).json({ message: "Server error fetching uploaded books" });
   }
 });
 
+
+
+
+// Get book by ID
+// router.get("/get-book-by-id/:id", authenticateToken, async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     console.log("Requested book ID:", id);
+//     const book = await Book.findById(id);
+//     if (!book) {
+//       console.log("Book not found in DB.");
+//       return res.status(404).json({ message: "Book not found" });
+//     }
+
+//     return res.json({ status: "Success", data: book });
+//   } catch (error) {
+//     res.status(500).json({ message: "Error" });
+//   }
+// });
+
 // Get books from Gutendex API
 router.get("/get-books-from-gutendex", fetchBooksFromGutendex);
+router.get("/get-book-by-id/:id", authenticateToken, getBookById);
+router.get("/fetch-content", fetchBookContent);
+// router.get('/fetch-content', bookController.fetchBookContent);
 
 // Search for books by title
 router.get("/search-books", async (req, res) => {
@@ -164,13 +185,17 @@ router.get("/fetch-book-content", authenticateToken, async (req, res) => {
 // Get books uploaded by the logged-in user
 router.get("/my-books", authenticateToken, async (req, res) => {
   try {
-    const { id } = req.headers;
-    const books = await Book.find({ uploader: id }).populate("genre");
-    return res.status(200).json({ status: "Success", data: books });
+    const userId = req.user.id || req.user._id; // Or req.user.id depending on your token structure
+    const books = await Book.find({ uploadedBy: userId }).populate("genre");
+
+    return res.status(200).json({ status: "Success", books });
   } catch (error) {
+    console.error("Error fetching user's books:", error);
     res.status(500).json({ message: "Error fetching user's books" });
   }
 });
+
+
 
 
 // Storage configuration
@@ -185,40 +210,103 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
-router.post("/upload", upload.fields([
-  { name: "pdf", maxCount: 1 },
-  { name: "coverImage", maxCount: 1 },
-]), async (req, res) => {
-  try {
-    console.log("REQ FILES:", req.files);
-    console.log("REQ BODY:", req.body);
 
-   // Find genre by name (case-insensitive)
-   let genreDoc = await Genre.findOne({ name: new RegExp(`^${req.body.genre}$`, 'i') });
+// router.post(
+//   "/upload",
+//   upload.fields([
+//     { name: "pdf", maxCount: 1 },
+//     { name: "coverImage", maxCount: 1 },
+//   ]),
+//   async (req, res) => {
+//     try {
+//       console.log("REQ FILES:", req.files);
+//       console.log("REQ BODY:", req.body);
 
-   if (!genreDoc) {
-     genreDoc = new Genre({ name: req.body.genre });
-     await genreDoc.save();
-   }
-   
-   const newBook = new Book({
-     title: req.body.title,
-     author: req.body.author,
-     genre: genreDoc._id,
-     desc: req.body.desc,
-     url: `/uploads/pdfs/${req.files.pdf[0].filename}`,
-     coverImage: `/uploads/pdfs/${req.files.coverImage[0].filename}`,
-   });
-   
+//       // Find genre by name (case-insensitive)
+//       let genreDoc = await Genre.findOne({
+//         name: new RegExp(`^${req.body.genre}$`, "i"),
+//       });
 
-    await newBook.save();
-    res.status(201).json({ message: "Book uploaded successfully" });
+//       if (!genreDoc) {
+//         genreDoc = new Genre({ name: req.body.genre });
+//         await genreDoc.save();
+//       }
 
-  } catch (err) {
-    console.error("UPLOAD ERROR:", err);
-    res.status(500).json({ error: "Internal Server Error" });
+//       const newBook = new Book({
+//         title: req.body.title,
+//         author: req.body.author,
+//         genre: genreDoc._id,
+//         desc: req.body.desc,
+//         url: `/uploads/pdfs/${req.files.pdf[0].filename}`,
+//         coverImage: `/uploads/pdfs/${req.files.coverImage[0].filename}`,
+//       });
+
+//       await newBook.save();
+
+//       // Populate genre name for client display and IndexedDB use
+//       const populatedBook = await Book.findById(newBook._id).populate("genre", "name");
+
+//       res.status(201).json({
+//         message: "Book uploaded successfully",
+//         book: populatedBook,
+//       });
+//     } catch (err) {
+//       console.error("UPLOAD ERROR:", err);
+//       res.status(500).json({ error: "Internal Server Error" });
+//     }
+//   }
+// );
+
+router.post(
+  "/upload",
+  authenticateToken,
+  upload.fields([
+    { name: "pdf", maxCount: 1 },
+    { name: "coverImage", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      const { title, author, genre, desc } = req.body;
+      const pdfFile = req.files?.pdf?.[0];
+      const coverImageFile = req.files?.coverImage?.[0];
+
+      if (!title || !author || !genre || !desc || !pdfFile) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      let genreDoc = await Genre.findOne({ name: new RegExp(`^${genre}$`, "i") });
+      if (!genreDoc) {
+        genreDoc = new Genre({ name: genre });
+        await genreDoc.save();
+      }
+
+      console.log("User uploading book:", req.user);
+
+      const newBook = new Book({
+        title,
+        author,
+        genre: genreDoc._id,
+        desc,
+        url: `/uploads/pdfs/${pdfFile.filename}`,
+        coverImage: coverImageFile ? `/uploads/pdfs/${coverImageFile.filename}` : "",
+        uploadedBy: req.user.id || req.user._id,
+      });
+
+      await newBook.save();
+
+      const populatedBook = await Book.findById(newBook._id).populate("genre", "name");
+
+      res.status(201).json({
+        message: "Book uploaded successfully",
+        book: populatedBook,
+      });
+    } catch (err) {
+      console.error("UPLOAD ERROR:", err); // Make sure you check this output in your server console
+      res.status(500).json({ error: "Internal Server Error" });
+    }
   }
-});
+);
+
 
 router.get("/get-pending-books", authenticateToken, async (req, res) => {
   try {
@@ -298,6 +386,45 @@ router.get('/content/:bookId', async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ error: 'Failed to fetch book content.' });
+  }
+});
+
+router.get('/proxy-book', async (req, res) => {
+  const { url } = req.query;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Failed to fetch book');
+
+    const buffer = await response.arrayBuffer();
+    res.set('Content-Type', 'application/octet-stream');
+    res.send(Buffer.from(buffer));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// Single book GET endpoint
+router.get("/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    // console.log("Requested book ID:", id);
+    
+    // First try to find in our database
+    const book = await Book.findById(id).populate("genre");
+    
+    if (book) {
+      // console.log("Book found in database");
+      return res.status(200).json(book);
+    }
+    
+    // If not in our database, it might be a Gutendex book
+    // You can implement the Gutendex fetch here if needed
+    
+    return res.status(404).json({ message: "Book not found" });
+  } catch (error) {
+    console.error("Error fetching book by ID:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 

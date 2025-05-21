@@ -4,8 +4,114 @@ import axios from "axios";
 import "../styles/Admin.css";
 import logo from "../assets/logo.png";
 import userIcon from "../assets/romance.jpg";
-import {toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
+// Add custom styles
+const customStyles = {
+  manage: {
+    backgroundColor: "rgb(60, 124, 86)",
+    color: "#fff",
+    border: "none",
+    padding: "6px 14px",
+    borderRadius: "6px",
+    fontSize: "14px",
+    cursor: "pointer",
+    transition: "background-color 0.2s ease-in-out",
+  },
+  manageHover: {
+    backgroundColor: "rgb(31, 100, 69)",
+  },
+  errorMessage: {
+    color: "#e63946",
+    fontWeight: "bold",
+    marginTop: "10px",
+  },
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+  },
+  modalContent: {
+    background: "white",
+    padding: "2rem",
+    borderRadius: "10px",
+    width: "90%",
+    maxWidth: "500px",
+    boxShadow: "0 0 10px rgba(0,0,0,0.3)",
+  },
+  modalTitle: {
+    marginTop: 0,
+    borderBottom: "1px solid #eee",
+    paddingBottom: "10px",
+    color: "#333",
+  },
+  formGroup: {
+    marginBottom: "1rem",
+  },
+  formLabel: {
+    display: "block",
+    fontWeight: "bold",
+    marginBottom: "0.5rem",
+    color: "#555",
+  },
+  formInput: {
+    width: "100%",
+    padding: "0.5rem",
+    border: "1px solid #ccc",
+    borderRadius: "5px",
+    fontSize: "14px",
+  },
+  modalActions: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: "1rem",
+    marginTop: "1.5rem",
+  },
+  approveButton: {
+    padding: "0.5rem 1rem",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    backgroundColor: "#4CAF50",
+    color: "white",
+    fontWeight: "bold",
+  },
+  deleteButton: {
+    padding: "0.5rem 1rem",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    backgroundColor: "#f44336",
+    color: "white",
+    fontWeight: "bold",
+  },
+  cancelButton: {
+    padding: "0.5rem 1rem",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    backgroundColor: "#777",
+    color: "white",
+  },
+  bookDesc: {
+    maxHeight: "120px",
+    overflowY: "auto",
+    padding: "10px",
+    border: "1px solid #eee",
+    borderRadius: "5px",
+    fontSize: "14px",
+    backgroundColor: "#f9f9f9",
+    marginBottom: "15px",
+  },
+};
 
 const Admin = () => {
   const [adminName, setAdminName] = useState("");
@@ -18,6 +124,7 @@ const Admin = () => {
   const [users, setUsers] = useState([]);
   const [authors, setAuthors] = useState([]);
   const [books, setBooks] = useState([]);
+  const [pendingBooks, setPendingBooks] = useState([]); // New separate state for pending books
   const [genres, setGenres] = useState([]);
   const [activityLog, setActivityLog] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -26,6 +133,7 @@ const Admin = () => {
   const [form, setForm] = useState({});
   const [formType, setFormType] = useState(null);
   const [formId, setFormId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const token = localStorage.getItem("authToken");
   const role = localStorage.getItem("userRole"); 
@@ -77,18 +185,19 @@ const Admin = () => {
     fetchDashboardData();
   }, [navigate, token, role, allowedRoles]);
   
+  // Fixed rolePermissions - using 'role' instead of 'userRole'
   const rolePermissions = {
-    "users": userRole === "super_admin" || userRole === "user-admin",
-    "books": userRole === "super_admin" || userRole === "book-admin",
-    "genres": userRole === "super_admin" || userRole === "genre-admin",
-    "authors": userRole === "super_admin" || userRole === "author-admin",
-    "reviews": userRole === "super_admin" || userRole === "review-admin",
-    "admins": userRole === "super_admin",
+    "users": role === "super_admin" || role === "admin_user",
+    "books": role === "super_admin" || role === "admin_book",
+    "genres": role === "super_admin" || role === "admin_book",
+    "authors": role === "super_admin" || role === "admin_book",
+    "reviews": role === "super_admin" || role === "admin_book",
+    "admins": role === "super_admin",
+    "booksToApprove": role === "super_admin" || role === "admin_book"
   };
 
-
   const handleViewChange = (view, fetchFn) => {
-    if (!rolePermissions[role]?.includes(view)) {
+    if (!rolePermissions[view]) {
       setError("Access Denied: You do not have permission to access this section.");
       toast.warn("You do not have permission to access this section.");
       return;
@@ -161,23 +270,36 @@ const Admin = () => {
 
   const deleteItem = async (type, id) => {
     try {
+      if (!id) {
+        console.error("Cannot delete: No ID provided");
+        return;
+      }
+      
       const url = `http://localhost:1000/api/v1/${type}s/${id}`;
-      console.log("DELETE URL:", url); // Debug here
+      console.log("DELETE URL:", url);
       await axios.delete(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      toast.success(`${type} deleted successfully!`);
       reload(type);
     } catch (err) {
       console.error(`Error deleting ${type}:`, err);
+      toast.error(`Failed to delete ${type}.`);
     }
   };
   
-
   const reload = (type) => {
     switch (type) {
       case "user": fetchUsersByRole("user"); break;
       case "author": fetchUsersByRole("author"); break;
-      case "book": fetchBooks(); break;
+      case "book": 
+        // Check the current view before deciding which fetch to call
+        if (currentView === "booksToApprove") {
+          fetchBooksToApprove(); 
+        } else {
+          fetchBooks();
+        }
+        break;
       case "genre": fetchGenres(); break;
       case "review": fetchReviews(); break;
       default: break;
@@ -208,12 +330,15 @@ const Admin = () => {
 
   const fetchBooksToApprove = async () => {
     try {
-      const res = await axios.get("http://localhost:1000/api/v1/get-pending-books", {
+      const res = await axios.get("http://localhost:1000/api/v1/uploaded-books?pending=true", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setBooks(res.data.books || []);
+      
+      // Set the pending books to a separate state
+      setPendingBooks(res.data.books || []);
     } catch (err) {
-      console.error("Error fetching unapproved books:", err);
+      console.error("Error fetching Book Bagaicha Original books pending approval:", err);
+      toast.error("Failed to load original books pending approval");
     }
   };
 
@@ -224,15 +349,49 @@ const Admin = () => {
       });
       toast.success("Book approved successfully!");
       fetchBooksToApprove(); // refresh the list
+      
+      // Log activity for approval
+      try {
+        await axios.post("http://localhost:1000/api/v1/activity-log", {
+          action: "BOOK_APPROVED",
+          details: `Book ID: ${bookId} approved for Book Bagaicha Originals`
+        }, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch (logErr) {
+        console.error("Failed to log activity:", logErr);
+      }
     } catch (err) {
       console.error("Error approving book:", err);
       toast.error("Failed to approve book.");
     }
   };
-  
-  
-  
-  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const deleteBookToApprove = async (bookId) => {
+    try {
+      const url = `http://localhost:1000/api/v1/books/${bookId}`;
+      await axios.delete(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Book deleted successfully!");
+      fetchBooksToApprove(); // Only refresh the pending books list
+      
+      // Log activity for deletion
+      try {
+        await axios.post("http://localhost:1000/api/v1/activity-log", {
+          action: "BOOK_DELETED",
+          details: `Book ID: ${bookId} deleted from Book Bagaicha Originals pending approval`
+        }, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch (logErr) {
+        console.error("Failed to log activity:", logErr);
+      }
+    } catch (err) {
+      console.error("Error deleting book:", err);
+      toast.error("Failed to delete book.");
+    }
+  };
 
   const openManageModal = (item, type) => {
     let filteredItem = item;
@@ -264,6 +423,23 @@ const Admin = () => {
     setIsModalOpen(true);
   };
   
+  // Open modal for pending book approval
+  const openApprovalModal = (book) => {
+    setForm({
+      _id: book._id,
+      title: book.title,
+      author: book.author,
+      genre: book.genre?.name || "N/A",
+      desc: book.desc || "No description available",
+      coverImage: book.coverImage,
+      url: book.url,
+      createdAt: book.createdAt ? new Date(book.createdAt).toLocaleDateString() : "N/A"
+    });
+    setFormType("pendingBook");
+    setFormId(book._id);
+    setIsModalOpen(true);
+  };
+  
   const closeManageModal = () => {
     setIsModalOpen(false);
     setForm({});
@@ -279,15 +455,14 @@ const Admin = () => {
           <h3>{adminName}</h3>
         </div>
         <nav className="admin-nav">
-        <button onClick={() => setCurrentView("dashboard")}>Dashboard</button>
-        <button onClick={() => handleViewChange("users", () => fetchUsersByRole("user"))}>Readers</button>
-        <button onClick={() => handleViewChange("authors", () => fetchUsersByRole("author"))}>Authors</button>
-        <button onClick={() => handleViewChange("books", fetchBooks)}>Books</button>
-        <button onClick={() => handleViewChange("genres", fetchGenres)}>Genres</button>
-        <button onClick={() => handleViewChange("reviews", fetchReviews)}>Ratings & Reviews</button>
-        <button onClick={() => handleViewChange("admins", fetchAllAdmins)}>Admins</button>
-        <button onClick={() => handleViewChange("booksToApprove", fetchBooksToApprove)}>Books to Approve</button>
-
+          <button onClick={() => setCurrentView("dashboard")}>Dashboard</button>
+          <button onClick={() => handleViewChange("users", () => fetchUsersByRole("user"))}>Readers</button>
+          <button onClick={() => handleViewChange("authors", () => fetchUsersByRole("author"))}>Authors</button>
+          <button onClick={() => handleViewChange("books", fetchBooks)}>Books</button>
+          <button onClick={() => handleViewChange("genres", fetchGenres)}>Genres</button>
+          <button onClick={() => handleViewChange("reviews", fetchReviews)}>Ratings & Reviews</button>
+          <button onClick={() => handleViewChange("admins", fetchAllAdmins)}>Admins</button>
+          <button onClick={() => handleViewChange("booksToApprove", fetchBooksToApprove)}>Books to Approve</button>
         </nav>
       </aside>
   
@@ -349,7 +524,17 @@ const Admin = () => {
                   <tr key={user._id}>
                     <td>{user.username}</td>
                     <td>{user.email}</td>
-                    <td><button className="manage-button" onClick={() => openManageModal(user, "user")}>Manage</button></td>
+                    <td>
+                      <button 
+                        className="manage-button" 
+                        style={customStyles.manage}
+                        onMouseOver={(e) => Object.assign(e.target.style, customStyles.manageHover)}
+                        onMouseOut={(e) => Object.assign(e.target.style, customStyles.manage)}
+                        onClick={() => openManageModal(user, "user")}
+                      >
+                        Manage
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -370,7 +555,17 @@ const Admin = () => {
                   <tr key={author._id}>
                     <td>{author.username}</td>
                     <td>{author.email}</td>
-                    <td><button className="manage-button" onClick={() => openManageModal(author, "author")}>Manage</button></td>
+                    <td>
+                      <button 
+                        className="manage-button" 
+                        style={customStyles.manage}
+                        onMouseOver={(e) => Object.assign(e.target.style, customStyles.manageHover)}
+                        onMouseOut={(e) => Object.assign(e.target.style, customStyles.manage)}
+                        onClick={() => openManageModal(author, "author")}
+                      >
+                        Manage
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -393,7 +588,17 @@ const Admin = () => {
                     <td>{book.title}</td>
                     <td>{book.author}</td>
                     <td>{book.genre?.name || "N/A"}</td>
-                    <td><button className="manage-button" onClick={() => openManageModal(book, "book")}>Manage</button></td>
+                    <td>
+                      <button 
+                        className="manage-button" 
+                        style={customStyles.manage}
+                        onMouseOver={(e) => Object.assign(e.target.style, customStyles.manageHover)}
+                        onMouseOut={(e) => Object.assign(e.target.style, customStyles.manage)}
+                        onClick={() => openManageModal(book, "book")}
+                      >
+                        Manage
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -414,7 +619,17 @@ const Admin = () => {
                   <tr key={genre._id}>
                     <td>{genre.name}</td>
                     <td>{genre.bookCount ?? 0}</td>
-                    <td><button className="manage-button" onClick={() => openManageModal(genre, "genre")}>Manage</button></td>
+                    <td>
+                      <button 
+                        className="manage-button" 
+                        style={customStyles.manage}
+                        onMouseOver={(e) => Object.assign(e.target.style, customStyles.manageHover)}
+                        onMouseOut={(e) => Object.assign(e.target.style, customStyles.manage)}
+                        onClick={() => openManageModal(genre, "genre")}
+                      >
+                        Manage
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -437,7 +652,17 @@ const Admin = () => {
                       <td>{review.book?.title || "N/A"}</td>
                       <td>{review.rating}</td>
                       <td>{review.comment || "—"}</td>
-                      <td><button className="manage-button" onClick={() => openManageModal(review, "review")}>Manage</button></td>
+                      <td>
+                        <button 
+                          className="manage-button" 
+                          style={customStyles.manage}
+                          onMouseOver={(e) => Object.assign(e.target.style, customStyles.manageHover)}
+                          onMouseOut={(e) => Object.assign(e.target.style, customStyles.manage)}
+                          onClick={() => openManageModal(review, "review")}
+                        >
+                          Manage
+                        </button>
+                      </td>
                     </tr>
                   ))
                 ) : (
@@ -471,7 +696,15 @@ const Admin = () => {
                       <td>{admin.email}</td>
                       <td>{admin.role}</td>
                       <td>
-                        <button className="manage-button" onClick={() => openManageModal(admin, "user")}>Manage</button>
+                        <button 
+                          className="manage-button" 
+                          style={customStyles.manage}
+                          onMouseOver={(e) => Object.assign(e.target.style, customStyles.manageHover)}
+                          onMouseOut={(e) => Object.assign(e.target.style, customStyles.manage)}
+                          onClick={() => openManageModal(admin, "user")}
+                        >
+                          Manage
+                        </button>
                       </td>
                     </tr>
                   ))
@@ -485,66 +718,132 @@ const Admin = () => {
           </section>
         )}
 
-{currentView === "booksToApprove" && (
-  <section className="pending-books-section">
-    <h2>Books Pending Approval</h2>
-    {books.length === 0 ? (
-      <p>No pending books.</p>
-    ) : (
-      <table className="books-table">
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Author</th>
-            <th>Genre</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {books.map((book) => (
-            <tr key={book._id}>
-              <td>{book.title}</td>
-              <td>{book.author}</td>
-              <td>{book.genre?.name || "N/A"}</td>
-              <td>
-                <button onClick={() => approveBook(book._id)}>Approve</button>
-                <button onClick={() => deleteItem("book", book._id)}>Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    )}
-  </section>
-)}
-
-
+        {currentView === "booksToApprove" && (
+          <section className="pending-books-section">
+            <h2>Book Bagaicha Originals Pending Approval</h2>
+            {pendingBooks.length === 0 ? (
+              <p>No Book Bagaicha Original books pending approval.</p>
+            ) : (
+              <table className="books-table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Genre</th>
+                    <th>Upload Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingBooks.map((book) => (
+                    <tr key={book._id}>
+                      <td>{book.title}</td>
+                      <td>{book.author}</td>
+                      <td>{book.genre?.name || "N/A"}</td>
+                      <td>{book.createdAt ? new Date(book.createdAt).toLocaleDateString() : "N/A"}</td>
+                      <td>
+                        <button 
+                          className="manage-button" 
+                          style={customStyles.manage}
+                          onMouseOver={(e) => Object.assign(e.target.style, customStyles.manageHover)}
+                          onMouseOut={(e) => Object.assign(e.target.style, customStyles.manage)}
+                          onClick={() => openApprovalModal(book)}
+                        >
+                          Manage
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </section>
+        )}
       </main>
 
       {isModalOpen && (
-  <div className="modal-overlay">
-    <div className="modal-content">
-      <h3>{formId ? `Edit ${formType}` : `Create ${formType}`}</h3>
-      {Object.keys(form).map((key) => (
-        <div key={key} className="form-group">
-          <label>{key}</label>
-          <input
-            value={form[key]}
-            onChange={(e) =>
-              setForm({ ...form, [key]: e.target.value })
-            }
-          />
+        <div className="modal-overlay" style={customStyles.modalOverlay}>
+          <div className="modal-content" style={customStyles.modalContent}>
+            <h3 style={customStyles.modalTitle}>
+              {formType === "pendingBook" 
+                ? "Book Approval" 
+                : formId 
+                  ? `Edit ${formType}` 
+                  : `Create ${formType}`}
+            </h3>
+            
+            {formType === "pendingBook" ? (
+              <>
+                <div>
+                  <h4>Book Details</h4>
+                  <p><strong>Title:</strong> {form.title}</p>
+                  <p><strong>Author:</strong> {form.author}</p>
+                  <p><strong>Genre:</strong> {form.genre}</p>
+                  <p><strong>Upload Date:</strong> {form.createdAt}</p>
+                  <p><strong>Description:</strong></p>
+                  <div style={customStyles.bookDesc}>{form.desc}</div>
+                  
+                  <div style={customStyles.modalActions}>
+                    <button 
+                      style={customStyles.approveButton} 
+                      onClick={() => {
+                        approveBook(formId);
+                        closeManageModal();
+                      }}
+                    >
+                      Approve
+                    </button>
+                    <button 
+                      style={customStyles.deleteButton} 
+                      onClick={() => {
+                        deleteBookToApprove(formId);
+                        closeManageModal();
+                      }}
+                    >
+                      Delete
+                    </button>
+                    <button style={customStyles.cancelButton} onClick={closeManageModal}>Cancel</button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {Object.keys(form).map((key) => (
+                  <div key={key} className="form-group" style={customStyles.formGroup}>
+                    <label style={customStyles.formLabel}>{key}</label>
+                    <input
+                      style={customStyles.formInput}
+                      value={form[key] || ""}
+                      onChange={(e) =>
+                        setForm({ ...form, [key]: e.target.value })
+                      }
+                    />
+                  </div>
+                ))}
+                <div className="modal-actions" style={customStyles.modalActions}>
+                  <button 
+                    style={customStyles.approveButton} 
+                    onClick={handleSubmit}
+                  >
+                    {formId ? "Update" : "Create"}
+                  </button>
+                  {formId && (
+                    <button 
+                      style={customStyles.deleteButton} 
+                      onClick={() => deleteItem(formType, formId)}
+                    >
+                      Delete
+                    </button>
+                  )}
+                  <button style={customStyles.cancelButton} onClick={closeManageModal}>Cancel</button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      ))}
-      <div className="modal-actions">
-        <button onClick={handleSubmit}>{formId ? "Update" : "Create"}</button>
-        <button onClick={() => deleteItem(formType, formId)}>Delete</button>
-        <button onClick={closeManageModal}>Cancel</button>
-      </div>
-    </div>
-  </div>
-)}
+      )}
     </div>
   );
 };
+
 export default Admin;

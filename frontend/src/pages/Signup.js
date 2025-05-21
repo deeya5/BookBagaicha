@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -40,16 +39,47 @@ const Signup = () => {
     const { confirmPassword, ...requestData } = { ...values };
 
     try {
+      console.log("Sending signup request with data:", { ...requestData, password: "[REDACTED]" });
       const response = await axios.post("http://localhost:1000/api/v1/sign-up", requestData);
       
-      // Store user details after sign-up
-      localStorage.setItem("authToken", response.data.token);
-      localStorage.setItem("username", response.data.username);
-      localStorage.setItem("avatar", response.data.avatar || "");
-      window.dispatchEvent(new Event("storage")); // Force UI update
+      console.log("Signup response received:", { 
+        ...response.data, 
+        token: response.data.token ? "[TOKEN RECEIVED]" : "[NO TOKEN]" 
+      });
       
-      navigate("/");
+      // Extract authentication data
+      const { id, username, role, token } = response.data;
+      
+      if (!token) {
+        console.error("No authentication token received from server");
+        setError("Account created but no authentication token received. Please try logging in.");
+        navigate("/login");
+        return;
+      }
+      
+      // Create user object
+      const user = { _id: id, username, role };
+      
+      // Store auth data in localStorage
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("username", username);
+      localStorage.setItem("authToken", token);
+      localStorage.setItem("userRole", role);
+      
+      // Force UI update
+      window.dispatchEvent(new Event("storage"));
+      
+      console.log("Authentication data stored successfully");
+      
+      // Redirect based on role
+      if (role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
     } catch (error) {
+      console.error("Signup error:", error);
+      console.error("Error response:", error.response?.data);
       setError(error.response?.data?.message || "Signup failed. Please try again.");
     }
   };

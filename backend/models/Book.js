@@ -39,6 +39,11 @@ const bookSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    uploadedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
 
   },
   { timestamps: true }

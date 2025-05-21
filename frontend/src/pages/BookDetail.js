@@ -4,7 +4,8 @@ import "../styles/bookDetail.css";
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { saveBookToIndexedDB } from "../utils/offlineDB";
+// Commenting out offline DB import as it's not required now
+// import { saveBookToIndexedDB } from "../utils/offlineDB";
 
 const BookDetail = () => {
   const { state } = useLocation();
@@ -21,23 +22,30 @@ const BookDetail = () => {
   const [editComment, setEditComment] = useState("");
   const [editRating, setEditRating] = useState(0);
 
-  const location = useLocation();
-  const { offlineBook } = location.state || {};
-
-
 
   const token = localStorage.getItem("authToken");
   const isLoggedIn = !!token;
   const user = JSON.parse(localStorage.getItem('user'));
   const bookId = state?.book?._id || bookIdParam;
 
+
+
   const fetchBookDetails = async (bookId) => {
     try {
-      const response = await axios.get(`http://localhost:1000/api/v1/books/${bookId}`);
+      const response = await axios.get(
+        `http://localhost:1000/api/v1/books/${bookId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setBook(response.data.book);
     } catch (err) {
       console.error("Error fetching book details:", err);
-      setError("Book not found.");
+      setError("Book not found or unauthorized access.");
+      
+      // If unauthorized, redirect to login
+      if (err.response?.status === 401) {
+        toast.error("Please log in to view this book");
+        navigate("/login");
+      }
     }
   };
 
@@ -71,7 +79,6 @@ const BookDetail = () => {
   }, [token]);
   
 
-  // Fetch book details if not already present
   useEffect(() => {
     if (!book && bookId) {
       fetchBookDetails(bookId);
@@ -79,56 +86,91 @@ const BookDetail = () => {
       fetchFeaturedBooks(book._id);
       fetchReviews(book._id);
     }
-  }, [book, bookId, fetchFeaturedBooks]);
+    
+    // Check token validity
+    if (!token && bookId) {
+      console.log("No auth token found, but continuing to fetch public book data");
+    }
+  }, [book, bookId, fetchFeaturedBooks, token]);
   
-
-
 const handleReadClick = async () => {
+  // Check if user is logged in
   if (!isLoggedIn) {
     navigate("/login");
     return;
   }
 
   const userId = user?._id;
-  const bookIdToUse = book?._id;
+  const bookIdToUse = book?._id || book?.id; // Handle both DB and Gutendex books
+
+  // Debug info
+  console.log("Handle Read Click - Debug Info:");
+  console.log("User ID:", userId);
+  console.log("Book ID to use:", bookIdToUse);
+  console.log("Full book object:", book);
 
   if (!userId || !bookIdToUse) {
-    if (!userId) console.error("User ID missing.");
-    if (!bookIdToUse) console.error("Book ID missing.");
-    toast.error("User or book not found.");
+    toast.error("User or book information not found.");
     return;
   }
 
   try {
-    await axios.post(
-      "http://localhost:1000/api/v1/library/add",
-      { bookId: bookIdToUse, currentlyReading: true }, // no userId in body if backend gets it from token
-      { headers: { Authorization: `Bearer ${token}` } }
+    // First add to library with consistent URL
+    const libraryEndpoint = "http://localhost:1000/api/v1/library/add";
+    console.log("Adding to library at:", libraryEndpoint);
+    console.log("Library payload:", { bookId: bookIdToUse, currentlyReading: true });
+    
+    const libraryResponse = await axios.post(
+      libraryEndpoint,
+      { 
+        bookId: bookIdToUse, 
+        currentlyReading: true 
+      },
+      { 
+        headers: { Authorization: `Bearer ${token}` } 
+      }
     );
-    console.log("user", user);
-console.log("userId", user?._id);
-
-
-    // console.log("Book added to library:", response.data);
-    navigate(`/read/${bookIdToUse}`);
+    
+    console.log("Library add response:", libraryResponse?.data);
+    toast.success("Book added to your library");
+    
   } catch (err) {
-    console.error("Error starting to read:", err);
-
-    // If book already exists in the library, still allow navigation
-    if (err.response?.data?.message === "Book already in library") {
-      navigate(`/read/${bookIdToUse}`);
+    // Only show error if it's not "already in library"
+    console.error("Library add error details:", err.response?.data || err.message);
+    
+    if (!err.response?.data?.message?.includes("Book already in library")) {
+      console.error("Library add error:", err);
+      toast.error("Could not save book to your library.");
+      // Continue to reader anyway
     } else {
-      toast.error("Could not start reading the book.");
+      console.log("Book already in library, continuing to reader");
     }
   }
+
+  // Prepare navigation state with all possible book info
+  const navigationState = {
+    title: book.title,
+    author: book?.authors?.[0]?.name || book?.author || "Unknown",
+    // Pass the entire book object for safety
+    bookData: book, 
+  };
+  
+  console.log("Navigating to reader with state:", navigationState);
+  console.log("Reader URL:", `/read/online/${bookIdToUse}`);
+
+  // Navigate to reader with all necessary state data
+  navigate(`/read/online/${bookIdToUse}`, {
+    state: navigationState
+  });
 };
 
-// console.log("📦 Payload being sent:", {
-//   bookId,
-// });
-//console.log('Book object before saving:', book);
+/* Commenting out the offline book saving functionality as it's not required now
+const handleSaveBook = async () => {
+  if (!book?.url) {
+    toast.error("Book download URL not available.");
+    return;
+  }
 
-const handleSaveBook = () => {
   const isPdf = book.url.endsWith(".pdf"); // uploaded user book
   const isTxt = book.url.endsWith(".txt"); // Gutendex book
 
@@ -137,21 +179,46 @@ const handleSaveBook = () => {
     return;
   }
 
-  const bookData = {
-    id: book._id || book.id,
-    title: book.title,
-    author: book.author,
-    genre: book.genre,
-    coverImage: book.coverImage,
-    url: book.url,
-    format: isPdf ? "pdf" : "txt", // Add format flag
-  };
+  const proxyUrl = `/api/external/proxy-book?url=${encodeURIComponent(book.url)}`;
 
-  saveBookToIndexedDB(bookData);
+  try {
+    const response = await fetch(proxyUrl);
+    if (!response.ok) throw new Error("Failed to download book content.");
+
+    let content;
+
+    // If it's a text file, fetch as text
+    if (isTxt) {
+      content = await response.text();
+    } else if (isPdf) {
+      // If it's a PDF file, fetch as ArrayBuffer
+      content = await response.arrayBuffer();
+    }
+
+    const bookData = {
+      id: book._id || book.id,
+      title: book.title,
+      author: book.author,
+      genre: book.genre,
+      coverImage: book.coverImage,
+      url: book.url,
+      format: isPdf ? "pdf" : "txt",
+      content, // Save the content for offline reading
+    };
+
+    // Save the book in IndexedDB
+    await saveBookToIndexedDB(bookData);
+    toast.success("Book saved for offline reading!");
+    console.log("📥 Saved book data:", bookData);
+  } catch (err) {
+    console.error("Error saving book offline:", err);
+    toast.error("Failed to save book for offline use.");
+  }
 };
+*/
 
-console.log('Downloading from URL:', book.download_url);
-
+// Log book URL properly if it exists
+console.log('Book URL:', book?.url || 'No URL available');
 
   const handleAddToLibrary = async () => {
     if (!isLoggedIn) {
@@ -247,9 +314,22 @@ console.log('Downloading from URL:', book.download_url);
       </div>
     );
   };
-  //console.log(book); 
 
-  if (!book) return <p>Book details not found.</p>;
+  if (!book) {
+    return (
+      <div className="loading-container">
+        <p>{error || "Loading book details..."}</p>
+        {error && (
+          <button 
+            onClick={() => navigate("/explore")} 
+            className="button"
+          >
+            Browse Other Books
+          </button>
+        )}
+      </div>
+    );
+  }
 
 
   const averageRating =
@@ -266,9 +346,18 @@ console.log('Downloading from URL:', book.download_url);
       {/* === Book Info Section === */}
       <div className="book-detail-container">
       <img
-        src={book.coverImage.startsWith("http") ? book.coverImage : `http://localhost:1000${book.coverImage}`}
+        src={book.coverImage && book.coverImage.startsWith("http") 
+          ? book.coverImage 
+          : book.coverImage 
+            ? `http://localhost:1000${book.coverImage}` 
+            : "/default-book-cover.jpg"
+        }
         alt={book.title}
         className="book-cover"
+        onError={(e) => {
+          e.target.onerror = null;
+          e.target.src = "/default-book-cover.jpg";
+        }}
       />
 
 
@@ -294,10 +383,8 @@ console.log('Downloading from URL:', book.download_url);
               Add To Library
             </button>
 
-            <button className="button save-offline" onClick={handleSaveBook}>Save Offline</button>
-
-
-
+            {/* Commenting out the Save Offline button as offline reading is not required now */}
+            {/* <button className="button save-offline" onClick={handleSaveBook}>Save Offline</button> */}
           </div>
         </div>
       </div>

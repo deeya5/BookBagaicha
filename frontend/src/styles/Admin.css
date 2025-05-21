@@ -101,9 +101,11 @@
 .admin-content > .users-section,
 .admin-content > .authors-section,
 .admin-content > .books-section,
-.admin-content > .genres-section {
-  margin-top: 100px; /* To account for fixed header */
+.admin-content > .genres-section,
+.admin-content > .booksToApprove {
+  margin-top: 100px;
 }
+
 
 .admin-logo {
   width: 160px;
@@ -181,7 +183,8 @@
 .books-section,
 .genres-section,
 .reviews-section,
-.admins-section {
+.admins-section,
+.pending-books-section {
   margin-top: 20px;
   background: #fff;
   padding: 20px;
@@ -199,6 +202,7 @@
   display: inline-block;
   margin-right: 10px;
   vertical-align: middle;
+  color: #3b5323;
 }
 
 .add-button {
@@ -222,11 +226,19 @@
 /* Optional: Additional spacing for certain headings */
 .reviews-section h2 {
   margin-top: 90px;
+  color: #3b5323;
 }
 
 .admins-section h2 {
   margin-top: 100px;
+  color: #3b5323;
 }
+
+.pending-books-section h2 {
+  margin-top: 100px;
+  color: #3b5323;
+}
+
 
 .admins-section .add-button {
   margin-top: 100px; 
@@ -238,7 +250,8 @@
 .books-table,
 .genres-table,
 .reviews-table,
-.admins-table {
+.admins-table,
+.booksToApprove {
   width: 100%;
   border-collapse: collapse;
   margin-top: 15px;
@@ -250,12 +263,14 @@
 .genres-table th,
 .reviews-table th,
 .admins-table th,
+.booksToApprove th,
 .users-table td,
 .authors-table td,
 .books-table td,
 .genres-table td,
 .reviews-table td,
-.admins-table td {
+.admins-table td,
+.booksToApprove td {
   border: 1px solid #ddd;
   padding: 12px;
   text-align: left;
@@ -396,19 +411,6 @@
   align-items: center;
   margin-bottom: 10px;
 }
-
-/* .add-button {
-  padding: 6px 12px;
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.add-button:hover {
-  background-color: #45a049;
-} */
 
 @media (max-width: 1024px) {
   .admin-sidebar {

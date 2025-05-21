@@ -2,24 +2,23 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../utils/axiosInstance";
 import "../styles/Home.css";
-import romanceImage from "../assets/romance.jpg";
-import fantasyImage from "../assets/fantasy.jpg";
-import fictionImage from "../assets/romance.jpg";
-import adventureImage from "../assets/fantasy.jpg";
 
-const genreImages = {
-  Fantasy: fantasyImage,
-  Fiction: fictionImage,
-  Romance: romanceImage,
-  Adventure: adventureImage,
-};
 
 const Home = () => {
   const navigate = useNavigate();
   const [featuredBooks, setFeaturedBooks] = useState([]);
-  const [genres, setGenres] = useState([]);
   const [error, setError] = useState("");
-  const [isLoadingGenres, setIsLoadingGenres] = useState(true);
+  const [originalBooks, setOriginalBooks] = useState([]);
+
+  const fetchOriginalBooks = async () => {
+          try {
+            const res = await axiosInstance.get("http://localhost:1000/api/v1/uploaded-books");
+            setOriginalBooks(res.data.books);
+          } catch (err) {
+            console.error("Error fetching original books", err);
+          }
+        };
+
 
   useEffect(() => {
     const fetchFeaturedBooks = async () => {
@@ -32,55 +31,9 @@ const Home = () => {
       }
     };
   
-    const genreMapping = {
-      horror: "Horror",
-      adventure: "Adventure",
-      romance: "Romance",
-      drama: "Drama",
-      fantasy: "Fantasy",
-      psychological: "Psychological Fiction",
-      comedy: "Comedy",
-      biography: "Biography",
-      classic: "Classic",
-      mystery: "Mystery",
-      gothic: "Gothic Fiction",
-      science: "Science Fiction",
-    };
   
-    const extractGenre = (desc) => {
-      for (let keyword in genreMapping) {
-        if (desc.toLowerCase().includes(keyword)) {
-          return genreMapping[keyword];
-        }
-      }
-      return "Miscellaneous";
-    };
-  
-    const fetchGenresFromBooks = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await axiosInstance.get("/get-books-from-gutendex", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-  
-        const genreSet = new Set();
-        response.data.data.forEach((book) => {
-          const genre = extractGenre(book.desc || "");
-          genreSet.add(genre);
-        });
-  
-        const genreArray = Array.from(genreSet).slice(0, 4); // pick any 4 genres
-        const genreObjects = genreArray.map((name) => ({ name }));
-        setGenres(genreObjects);
-      } catch (err) {
-        console.error("Error fetching genres from books:", err);
-      } finally {
-        setIsLoadingGenres(false);
-      }
-    };
-  
-    fetchGenresFromBooks();
     fetchFeaturedBooks();
+    fetchOriginalBooks();
   }, []);
   
 
@@ -100,30 +53,35 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Genre Section */}
-      <section className="genres">
-        <h2>Browse The Genre</h2>
-        <p>Dive into what you're into.</p>
-        <div className="genre-grid">
-          {isLoadingGenres ? (
-            <div className="spinner"></div>
-          ) : genres.length > 0 ? (
-            genres.map((genre) => (
-              <div
-                key={genre.name}
-                className="genre-card"
-                onClick={() => navigate(`/genre#${genre.name.toLowerCase()}`)}
-              >
-                <img src={genreImages[genre.name] || romanceImage} alt={genre.name} />
-                <h3>{genre.name}</h3>
-              </div>
-            ))
-          ) : (
-            <p>No genres available.</p>
-          )}
+      <section className="original-books">
+  <h2>Book Bagaicha Originals</h2>
+  <div className="book-row">
+    {originalBooks.length > 0 ? (
+      originalBooks.map((book) => (
+        <div
+          key={book._id}
+          className="book-card"
+          onClick={() => navigate(`/book/${book._id}`, { state: { book } })}
+        >
+          <img
+            src={
+              book.coverImage.startsWith("http")
+                ? book.coverImage
+                : `http://localhost:1000${book.coverImage}`
+            }
+            alt={book.title}
+            className="book-cover"
+          />
+          <h3>{book.title}</h3>
+          <p>by {book.author}</p>
         </div>
-        <button className="show-more-button">Show More</button>
-      </section>
+      ))
+    ) : (
+      <p>No original books uploaded yet.</p>
+    )}
+  </div>
+</section>
+
 
       {/* Featured Books Section */}
       <section className="featured-books">

@@ -5,6 +5,25 @@ const Review = require("../models/review");
 
 const mongoose = require("mongoose");
 
+// Approve a book
+// In admin.controller.js
+exports.approveBook = async (req, res) => {
+  try {
+    const book = await Book.findById(req.params.id);
+    if (!book) {
+      return res.status(404).json({ message: "Book not found" });
+    }
+    book.approved = true;
+    await book.save();
+    res.json({ message: "Book approved successfully", book });
+  } catch (error) {
+    console.error("Error approving book:", error);
+    res.status(500).json({ message: "Internal server error", error });
+  }
+};
+
+
+
 exports.deleteUser = async (req, res) => {
   const { id } = req.params;
 
@@ -50,6 +69,8 @@ exports.createUser = async (req, res) => {
     res.status(500).json({ message: "Failed to create user" });
   }
 };
+
+
 
 exports.updateUser = async (req, res) => {
   try {

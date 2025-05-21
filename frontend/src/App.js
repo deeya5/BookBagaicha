@@ -13,7 +13,8 @@ import Genre from "./pages/Genre";
 import BookDetail from "./pages/BookDetail";
 import SearchResults from "./components/SearchResults";
 import GenreBooks from "./pages/GenreBooks";
-import BookReader from "./pages/BookReader";
+import OnlineBookReader from "./pages/OnlineBookReader";
+import OfflineReader from "./pages/OfflineBookReader"
 import MyBooks from "./pages/MyBooks";
 import Profile from "./pages/Profile";
 
@@ -40,6 +41,7 @@ function App() {
     <Router>
       <Layout>
         <Routes>
+
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Signup />} /> {/* Signup Route */}
           <Route path="/login" element={<Login />} /> {/* Login Route */}
@@ -52,10 +54,10 @@ function App() {
           <Route path="/book/:id" element={<BookDetail />} />
           <Route path="/search-results" element={<SearchResults />} /> 
           <Route path="/genre/:genreId" element={<GenreBooks />} />
-          <Route path="/bookreader/:bookId" element={<BookReader />} />
+          <Route path="/read/online/:bookId" element={<OnlineBookReader />} />
+          <Route path="/read/offline/:bookId" element={<OfflineReader />} />
           <Route path="/my-books" element={<MyBooks />} />
-          <Route path="/profile" element={<Profile />} />
-          
+          <Route path="/profile" element={<Profile />} />      
 
         </Routes>
       </Layout>

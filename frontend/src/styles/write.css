@@ -1,87 +1,211 @@
+/* write.css - Green Theme */
+
+/* Main container */
 .write-container {
   max-width: 800px;
-  margin: 40px auto;
-  padding: 40px;
-  background-color: #f9f9f9;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.write-header {
-  font-size: 32px;
-  font-weight: bold;
+  margin: 0 auto;
+  padding: 2.5rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #333;
-  text-align: center;
-  margin-bottom: 20px;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
+  background-color: #f7faf7;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
+/* Header styling */
+.write-header {
+  color: #2e573a;
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  position: relative;
+  padding-bottom: 0.75rem;
+  text-align: center;
+}
+
+.write-header:after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, #4CAF50, #2e573a);
+  border-radius: 2px;
+}
+
+/* Form elements styling */
 .title-input {
-  font-size: 18px;
-  padding: 12px;
   width: 100%;
-  border: 2px solid #ddd;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(76, 175, 80, 0.3);
   border-radius: 8px;
-  background-color: #fff;
-  transition: border-color 0.3s;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .title-input:focus {
-  border-color: #4CAF50;
   outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
 }
 
 .content-area {
-  height: 200px;
-  font-size: 18px;
-  padding: 12px;
   width: 100%;
-  border: 2px solid #ddd;
+  height: 200px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(76, 175, 80, 0.3);
   border-radius: 8px;
-  background-color: #fff;
-  transition: border-color 0.3s;
+  font-size: 1rem;
+  resize: vertical;
+  font-family: inherit;
+  transition: all 0.3s ease;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .content-area:focus {
-  border-color: #4CAF50;
   outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
 }
 
-.save-button {
-  background-color: #4CAF50;
-  color: white;
-  font-size: 20px;
-  padding: 12px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  width: 100%;
-}
-
-.save-button:hover {
-  background-color: #45a049;
+/* File upload styling */
+.file-label {
+  display: block;
+  margin-bottom: 0.7rem;
+  color: #2e573a;
+  font-weight: 600;
+  font-size: 1.1rem;
 }
 
 input[type="file"] {
-  font-size: 16px;
-  padding: 10px;
-  border: 2px solid #ddd;
+  width: 100%;
+  margin-bottom: 1.5rem;
+  padding: 0.7rem 0.2rem;
+  background-color: white;
+  border: 1px dashed #4CAF50;
   border-radius: 8px;
-  background-color: #fff;
   cursor: pointer;
-  transition: border-color 0.3s;
+  transition: all 0.3s ease;
 }
 
 input[type="file"]:hover {
-  border-color: #4CAF50;
+  background-color: #f2f9f2;
 }
 
-textarea:focus, input[type="text"]:focus {
-  border-color: #4CAF50;
-  outline: none;
+/* Custom file upload appearance */
+input[type="file"]::file-selector-button {
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #4CAF50, #2e7d32);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-right: 15px;
+  font-weight: 500;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: linear-gradient(135deg, #2e7d32, #4CAF50);
+}
+
+/* Button styling */
+.save-button {
+  display: block;
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, #4CAF50, #2e7d32);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1.1rem;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(76, 175, 80, 0.2);
+  margin-top: 1rem;
+}
+
+.save-button:hover {
+  background: linear-gradient(135deg, #2e7d32, #4CAF50);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(76, 175, 80, 0.3);
+}
+
+.save-button:active {
+  transform: translateY(0);
+}
+
+/* Toast notification styling (overrides for react-toastify) */
+:root {
+  --toastify-color-success: #4CAF50;
+  --toastify-color-error: #f44336;
+  --toastify-icon-color-success: var(--toastify-color-success);
+  --toastify-icon-color-error: var(--toastify-color-error);
+}
+
+/* Visual enhancements */
+.write-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.write-container:before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 150px;
+  height: 150px;
+  background-color: rgba(76, 175, 80, 0.05);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.write-container:after {
+  content: "";
+  position: absolute;
+  bottom: -20px;
+  left: -20px;
+  width: 180px;
+  height: 180px;
+  background-color: rgba(76, 175, 80, 0.05);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+/* Form group styling */
+.title-input, .content-area {
+  transition: transform 0.2s ease;
+}
+
+.title-input:focus, .content-area:focus {
+  transform: translateY(-2px);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .write-container {
+    padding: 1.5rem;
+    margin: 0 1rem;
+  }
+  
+  .write-header {
+    font-size: 2rem;
+  }
+  
+  .title-input, .content-area {
+    padding: 0.8rem;
+  }
+  
+  .save-button {
+    padding: 0.8rem;
+  }
 }

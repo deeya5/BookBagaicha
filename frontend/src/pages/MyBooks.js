@@ -10,29 +10,54 @@ const MyBooks = () => {
   useEffect(() => {
     const loadBooks = async () => {
       const books = await getAllBooks();
+      console.log("📚 Loaded books from IndexedDB:", books);
       setOfflineBooks(books);
     };
     loadBooks();
   }, []);
 
-const handleReadBook = (book) => {
-  // Create a Blob only if the book has raw content
-  const blob = new Blob([book.content], { type: "application/pdf" });
+  const handleReadBook = (book) => {
+    let blob;
 
-  navigate(`/bookreader/${book._id}`, {
-    state: {
-      offlineBook: {
-        title: book.title,
-        author: book.author,
-        content: blob,
+    console.log("📦 Book format:", book.format);
+    console.log("📦 typeof content:", typeof book.content);
+    console.log("📦 instanceof ArrayBuffer:", book.content instanceof ArrayBuffer);
+
+    if (book.format === "pdf") {
+      let byteArray;
+
+      if (book.content instanceof ArrayBuffer) {
+        byteArray = new Uint8Array(book.content);
+      } else if (book.content?.buffer) {
+        byteArray = new Uint8Array(book.content.buffer);
+      } else {
+        // Fallback: convert object with numeric keys to Uint8Array
+        try {
+          byteArray = new Uint8Array(Object.values(book.content));
+        } catch (e) {
+          console.error("❌ Failed to reconstruct Uint8Array from book content:", e);
+          alert("Failed to load book. Invalid content.");
+          return;
+        }
+      }
+
+      blob = new Blob([byteArray], { type: "application/pdf" });
+    } else {
+      // .txt file content stored as string
+      blob = new Blob([book.content], { type: "text/plain" });
+    }
+
+    console.log("📄 Blob created:", blob);
+    navigate(`/read/offline/${book._id}`, {
+      state: {
+        offlineBook: {
+          title: book.title,
+          author: book.author,
+          content: blob,
+        },
       },
-    },
-  });
-  
-  console.log("Blob type while saving:", blob.type);
-
-};
-
+    });
+  };
 
   return (
     <div className="my-books-container">
@@ -45,7 +70,7 @@ const handleReadBook = (book) => {
             <div key={book._id} className="book-card">
               <h2 className="book-title">{book.title}</h2>
               <p className="book-author">{book.author}</p>
-              <p className="book-desc">{book.desc}</p>
+              <p className="book-desc">{book.desc || "No description available."}</p>
               <button
                 className="read-button"
                 onClick={() => handleReadBook(book)}

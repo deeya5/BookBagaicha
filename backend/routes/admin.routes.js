@@ -26,4 +26,7 @@ router.delete("/genres/:id", authenticateToken, authorizePermissions("delete"), 
 router.get("/reviews", authenticateToken, authorizePermissions("read"), adminController.getAllReviews);
 router.delete("/reviews/:id", authenticateToken, authorizePermissions("delete"), adminController.deleteReview);
 
+//Approvals
+router.put("/approve-book/:id", authenticateToken, authorizePermissions("update"), adminController.approveBook);
+
 module.exports = router;

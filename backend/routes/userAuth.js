@@ -15,9 +15,13 @@ const authenticateToken = (req, res, next) => {
         return res.status(403).json({ message: "Token expired. Please Signin again" });
       }
       req.user = user;
+      // console.log("Authorization Header:", req.headers['authorization']);
+
       next();
     });
   };
   
 
 module.exports = { authenticateToken};
+
+

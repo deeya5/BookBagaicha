@@ -7,23 +7,23 @@ const path = require('path');
 
 const jwt = require("jsonwebtoken");
 
-// Middleware to authenticate token
-function authenticateToken(req, res, next) {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
+// // Middleware to authenticate token
+// function authenticateToken(req, res, next) {
+//   const authHeader = req.headers["authorization"];
+//   const token = authHeader && authHeader.split(" ")[1];
 
-  if (!token) {
-    return res.status(401).json({ message: "Authentication token required" });
-  }
+//   if (!token) {
+//     return res.status(401).json({ message: "Authentication token required" });
+//   }
 
-  jwt.verify(token, "bookbagaicha5", (err, user) => {
-    if (err) {
-      return res.status(403).json({ message: "Invalid or expired token" });
-    }
-    req.user = user;
-    next();
-  });
-}
+//   jwt.verify(token, "bookbagaicha5", (err, user) => {
+//     if (err) {
+//       return res.status(403).json({ message: "Invalid or expired token" });
+//     }
+//     req.user = user;
+//     next();
+//   });
+// }
 
 // Load environment variables
 dotenv.config();
@@ -37,6 +37,9 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'favicon.ico'));
+});
 
 // Database connection
 require("./conn/conn");
@@ -52,21 +55,24 @@ const activityRoutes = require("./routes/activityLog");
 const libraryRoutes = require("./routes/library");
 const reviewRoutes = require("./routes/reviewRoutes");
 const adminRoutes = require("./routes/admin.routes");
+const proxyRoutes = require('./proxy');
 
 
 // Use routes
 app.use("/api/v1", userRoutes);
-app.use("/api/v1", bookRoutes);
+app.use('/api/v1/books', bookRoutes);
 app.use("/api/v1", favouriteRoutes);
 app.use("/api/auth", authRoutes);
-app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
+// app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use("/api/v1", uploadRoutes);
 app.use("/api/v1", genreRoutes);
 app.use("/api/v1", activityRoutes);
 app.use("/api/v1/library", libraryRoutes);
 app.use("/api/v1/reviews", reviewRoutes);
-app.use("/admin", adminRoutes);
-
+app.use("/api/v1", adminRoutes);
+app.use("/api/v1", bookRoutes);
+app.use('/api/external', proxyRoutes);
 
 // Debugging Log to check if user routes are loaded
 console.log("User routes loaded successfully!");
