@@ -46,6 +46,18 @@ router.post("/add-book", authenticateToken, async (req, res) => {
   }
 });
 
+
+router.get("/public-books", async (req, res) => {
+  try {
+    const books = await Book.find().sort({ createdAt: -1 }).populate("genre");
+    return res.json({ status: "Success", data: books });
+  } catch (error) {
+    console.error("Error fetching public books:", error); // Add this line
+    res.status(500).json({ message: "Error fetching books" });
+  }
+});
+
+
 // Update book
 router.put("/update-book", authenticateToken, async (req, res) => {
   try {
@@ -91,6 +103,7 @@ router.get("/get-all-books", authenticateToken, authorizePermissions("dashboard"
     res.status(500).json({ message: "Error" });
   }
 });
+
 
 // Get recently added books
 router.get("/get-recent-books", authenticateToken, async (req, res) => {
@@ -141,6 +154,7 @@ router.get("/uploaded-books", async (req, res) => {
 router.get("/get-books-from-gutendex", fetchBooksFromGutendex);
 router.get("/get-book-by-id/:id", authenticateToken, getBookById);
 router.get("/fetch-content", fetchContent);
+
 // router.get('/fetch-content', bookController.fetchBookContent);
 
 // Search for books by title

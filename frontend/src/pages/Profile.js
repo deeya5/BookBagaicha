@@ -51,9 +51,16 @@ const Profile = () => {
         <div className="my-books">
           <h2>My Uploaded Books</h2>
           {books.length > 0 ? (
-            <ul>
-              {books.map(book => (
-                <li key={book._id}>{book.title}</li>
+            <ul className="book-list">
+              {books.map((book) => (
+                <li
+                  key={book._id}
+                  className="book-list-item"
+                  onClick={() => navigate(`/book/${book._id}`, { state: { book } })}
+                  style={{ cursor: "pointer", padding: "10px 0" }}
+                >
+                  <strong>{book.title}</strong> — <em>{book.author}</em>
+                </li>
               ))}
             </ul>
           ) : (

@@ -9,24 +9,20 @@ const Explore = () => {
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [filterOpen] = useState(true);
   const booksPerPage = 8;
   const navigate = useNavigate();
 
-  // Filter states
   const [filters, setFilters] = useState({
-    genres: {},
     uploadTime: {
-      recent: false,  // Last 30 days
-      month: false,   // Last 3 months
-      year: false,    // Last year
+      recent: false,
+      month: false,
+      year: false,
     },
     languages: {},
     specialFilters: {
-      mostRated: false,     // Most rated books
-      bookBagaichaWriters: false,  // BookBagaicha writers
-      userUploaded: false,  // Added filter for user-uploaded books
-      gutendexBooks: false, // Added filter for Gutendex API books
+      mostRated: false,
+      bookBagaichaWriters: false,
+      gutendexBooks: false,
     }
   });
 
@@ -34,50 +30,34 @@ const Explore = () => {
     const fetchBooks = async () => {
       setIsLoading(true);
       try {
-        const token = localStorage.getItem("authToken"); 
-
-        
-        // Change to use getAllBooks endpoint that fetches from all sources
+        const token = localStorage.getItem("authToken");
         const response = await axios.get(
-          "http://localhost:1000/api/v1/get-all-books",
+          "http://localhost:1000/api/v1/public-books",
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
 
-        // Extract books and ensure all have necessary properties
         const books = response.data.data.map(book => ({
           ...book,
           uploadDate: book.createdAt || book.uploadDate || new Date().toISOString(),
-          ratings: book.ratings || Math.floor(Math.random() * 500),
+          // Keep original ratings data - don't generate fake ratings
+          ratings: book.ratings || null,
+          averageRating: book.averageRating || null,
           isBookBagaichaWriter: book.isBookBagaichaWriter || false,
-          // Ensure all books have source designation
-          isFromGutendex: book.isFromGutendex || false,
-          // Ensure we're using genre name, not ID
-          genre: book.genre?.name || book.genre || "Miscellaneous"
+          isFromGutendx: book.isFromGutendx || false, // Fixed typo: Gutendx not Gutendex
         }));
-        
-        // Extract available genres and languages for filters
-        const availableGenres = {};
+
         const availableLanguages = {};
-        
         books.forEach(book => {
-          const genre = book.genre || "Miscellaneous";
-          availableGenres[genre] = true;
-          
           const language = book.language || "English";
           availableLanguages[language] = true;
         });
 
-        // Initialize filters
         setFilters(prev => ({
           ...prev,
-          genres: Object.keys(availableGenres).reduce((acc, genre) => {
-            acc[genre] = false;
-            return acc;
-          }, {}),
-          languages: Object.keys(availableLanguages).reduce((acc, language) => {
-            acc[language] = false;
+          languages: Object.keys(availableLanguages).reduce((acc, lang) => {
+            acc[lang] = false;
             return acc;
           }, {})
         }));
@@ -95,285 +75,303 @@ const Explore = () => {
     fetchBooks();
   }, []);
 
-  // Apply filters whenever they change
   useEffect(() => {
-    applyFilters();
+    const handleFilters = async () => {
+      await applyFilters();
+    };
+    handleFilters();
   }, [filters, allBooks]);
 
+  const fetchBookBagaichaWriters = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await axios.get("http://localhost:1000/api/v1/uploaded-books", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // Sort by createdAt (latest first)
+      const sortedBooks = response.data.books.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      return sortedBooks;
+    } catch (error) {
+      console.error("Error fetching BookBagaicha writers books:", error);
+      return [];
+    }
+  };
 
-  const applyFilters = () => {
-    // Check if any filters are active
-    const hasActiveGenreFilters = Object.values(filters.genres).some(value => value);
-    const hasActiveLanguageFilters = Object.values(filters.languages).some(value => value);
-    const hasActiveTimeFilters = Object.values(filters.uploadTime).some(value => value);
-    const hasActiveSpecialFilters = Object.values(filters.specialFilters).some(value => value);
-    
-    // If no filters active, show all books
-    if (!hasActiveGenreFilters && !hasActiveLanguageFilters && !hasActiveTimeFilters && !hasActiveSpecialFilters) {
+  const fetchGutendxBooks = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      
+      // Add timeout and better error handling
+      const response = await axios.get("http://localhost:1000/api/v1/gutendx-books", {
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 10000, // 10 second timeout
+      });
+
+      // Handle different possible response structures
+      let books = [];
+      if (response.data && response.data.data) {
+        books = response.data.data;
+      } else if (response.data && Array.isArray(response.data)) {
+        books = response.data;
+      } else {
+        console.warn("Unexpected response structure for Gutendx books:", response.data);
+        return [];
+      }
+
+      // Filter for Gutendx books and ensure proper data structure
+      return books
+        .filter(book => book.isFromGutendx || book.source === 'gutendx')
+        .map(book => ({
+          ...book,
+          isFromGutendx: true,
+          averageRating: book.averageRating || null,
+          ratings: book.ratings || null,
+        }));
+    } catch (error) {
+      console.error("Error fetching Gutendx books:", error);
+      
+      // Provide more specific error information
+      if (error.response) {
+        console.error("Response error:", error.response.status, error.response.data);
+        setError(`Failed to load Gutendx books: ${error.response.status} error`);
+      } else if (error.request) {
+        console.error("Request error:", error.request);
+        setError("Failed to connect to Gutendx books service");
+      } else {
+        console.error("Unknown error:", error.message);
+        setError("An unexpected error occurred while loading Gutendx books");
+      }
+      
+      return [];
+    }
+  };
+
+  const applyFilters = async () => {
+    const hasActiveLanguageFilters = Object.values(filters.languages).some(v => v);
+    const hasActiveTimeFilters = Object.values(filters.uploadTime).some(v => v);
+    const hasActiveSpecialFilters = Object.values(filters.specialFilters).some(v => v);
+
+    if (!hasActiveLanguageFilters && !hasActiveTimeFilters && !hasActiveSpecialFilters) {
       setFilteredBooks(allBooks);
       setCurrentPage(1);
       return;
     }
-    
-    // Apply filters
-    const filtered = allBooks.filter(book => {
-      // Genre filter
-      if (hasActiveGenreFilters) {
-        const bookGenre = book.genre || "Miscellaneous";
-        if (!filters.genres[bookGenre]) return false;
+
+    let booksToFilter = [...allBooks];
+
+    // Handle special filters that require specific data sources
+    if (hasActiveSpecialFilters) {
+      if (filters.specialFilters.bookBagaichaWriters) {
+        const bagaichaBooks = await fetchBookBagaichaWriters();
+        booksToFilter = bagaichaBooks;
+      } else if (filters.specialFilters.gutendexBooks) {
+        const gutendxBooks = await fetchGutendxBooks();
+        booksToFilter = gutendxBooks;
+      } else if (filters.specialFilters.mostRated) {
+        // Filter books that have been rated (have actual ratings, not null/undefined)
+        booksToFilter = [...allBooks].filter(book => {
+          const hasRatings = (book.averageRating !== null && book.averageRating !== undefined) || 
+                            (book.ratings !== null && book.ratings !== undefined);
+          return hasRatings;
+        });
+        console.log(`Filtered ${booksToFilter.length} books with ratings out of ${allBooks.length} total books`);
       }
-      
+    }
+
+    const filtered = booksToFilter.filter(book => {
       // Language filter
       if (hasActiveLanguageFilters) {
-        const bookLanguage = book.language || "English";
-        if (!filters.languages[bookLanguage]) return false;
+        const lang = book.language || "English";
+        if (!filters.languages[lang]) return false;
       }
-      
-      // Special filters
-      if (hasActiveSpecialFilters) {
-        // Book source filters (Gutendex or user-uploaded)
-        if (filters.specialFilters.userUploaded && book.isFromGutendex) {
-          return false;
-        }
-        
-        if (filters.specialFilters.gutendexBooks && !book.isFromGutendex) {
-          return false;
-        }
-        
-        // Most rated filter
-        if (filters.specialFilters.mostRated && book.ratings < 100) {
-          return false;
-        }
-        
-        // BookBagaicha writers filter
-        if (filters.specialFilters.bookBagaichaWriters && !book.isBookBagaichaWriter) {
-          return false;
-        }
-      }
-      
-      // Upload time filter
+
+      // Upload Time filter
       if (hasActiveTimeFilters) {
-        const uploadDate = new Date(book.uploadDate);
+        const uploadDate = new Date(book.uploadDate || book.createdAt);
         const now = new Date();
-        
-        if (filters.uploadTime.recent && (now - uploadDate) <= 30 * 24 * 60 * 60 * 1000) {
-          return true;
-        }
-        
-        if (filters.uploadTime.month && (now - uploadDate) <= 90 * 24 * 60 * 60 * 1000) {
-          return true;
-        }
-        
-        if (filters.uploadTime.year && (now - uploadDate) <= 365 * 24 * 60 * 60 * 1000) {
-          return true;
-        }
-        
-        if (hasActiveTimeFilters) return false;
+        const daysDiff = (now - uploadDate) / (24 * 60 * 60 * 1000);
+
+        let matchesTimeFilter = false;
+        if (filters.uploadTime.recent && daysDiff <= 30) matchesTimeFilter = true;
+        if (filters.uploadTime.month && daysDiff <= 90) matchesTimeFilter = true;
+        if (filters.uploadTime.year && daysDiff <= 365) matchesTimeFilter = true;
+
+        if (!matchesTimeFilter) return false;
       }
-      
+
       return true;
     });
-    
+
     setFilteredBooks(filtered);
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1);
   };
 
-  const handleFilterChange = (filterType, filterKey) => {
+  const handleFilterChange = (type, key) => {
+    console.log("Filter changed:", type, key);
     setFilters(prev => {
-      const newFilters = {...prev};
+      console.log("Previous filters:", prev);
+      const updated = { ...prev };
       
-      if (filterType === 'uploadTime') {
-        // For upload time, we want exclusive selection
-        Object.keys(newFilters.uploadTime).forEach(key => {
-          newFilters.uploadTime[key] = key === filterKey ? !newFilters.uploadTime[key] : false;
+      if (type === "uploadTime") {
+        // For upload time, only one can be selected at a time
+        Object.keys(updated.uploadTime).forEach(k => {
+          updated.uploadTime[k] = k === key ? !prev.uploadTime[k] : false;
         });
-      } else if (filterType === 'specialFilters') {
-        // Toggle special filters independently
-        newFilters.specialFilters[filterKey] = !newFilters.specialFilters[filterKey];
-      } else {
-        // For other filters, toggle the specific one
-        newFilters[filterType][filterKey] = !newFilters[filterType][filterKey];
+      } else if (type === "specialFilters") {
+        // Toggle the specific special filter - allow multiple selections
+        updated.specialFilters = {
+          ...updated.specialFilters,
+          [key]: !prev.specialFilters[key]
+        };
+      } else if (type === "languages") {
+        // Toggle the specific language
+        updated.languages = {
+          ...updated.languages,
+          [key]: !prev.languages[key]
+        };
       }
       
-      return newFilters;
+      console.log("Updated filters:", updated);
+      return updated;
     });
-  };
-
-  // Get current books for pagination
-  const getCurrentBooks = () => {
-    const indexOfLastBook = currentPage * booksPerPage;
-    const indexOfFirstBook = indexOfLastBook - booksPerPage;
-    return filteredBooks.slice(indexOfFirstBook, indexOfLastBook);
-  };
-
-  // Calculate total pages
-  const totalPages = Math.ceil(filteredBooks.length / booksPerPage);
-
-  // Navigation
-  const nextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-      window.scrollTo(0, 0); // Scroll to top on page change
-    }
-  };
-
-  const prevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-      window.scrollTo(0, 0); // Scroll to top on page change
-    }
   };
 
   const clearAllFilters = () => {
     setFilters({
-      genres: Object.keys(filters.genres).reduce((acc, genre) => {
-        acc[genre] = false;
-        return acc;
-      }, {}),
       uploadTime: {
         recent: false,
         month: false,
         year: false,
       },
-      languages: Object.keys(filters.languages).reduce((acc, language) => {
-        acc[language] = false;
+      languages: Object.keys(filters.languages).reduce((acc, lang) => {
+        acc[lang] = false;
         return acc;
       }, {}),
       specialFilters: {
         mostRated: false,
         bookBagaichaWriters: false,
-        userUploaded: false,
         gutendexBooks: false,
       }
     });
   };
 
+  const getCurrentBooks = () => {
+    const indexOfLast = currentPage * booksPerPage;
+    const indexOfFirst = indexOfLast - booksPerPage;
+    return filteredBooks.slice(indexOfFirst, indexOfLast);
+  };
+
+  const nextPage = () => {
+    if (currentPage < Math.ceil(filteredBooks.length / booksPerPage)) {
+      setCurrentPage(prev => prev + 1);
+      window.scrollTo(0, 0);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+      window.scrollTo(0, 0);
+    }
+  };
+
   const currentBooks = getCurrentBooks();
-  // Split books into two rows of 4
   const topRowBooks = currentBooks.slice(0, 4);
   const bottomRowBooks = currentBooks.slice(4, 8);
 
   return (
     <div className="explore-page">
-      {/* Sidebar (Always Open) */}
       <div className="filter open">
         <div className="filter-header">
           <h2>Filters</h2>
           <button className="clear-filters" onClick={clearAllFilters}>Clear All</button>
         </div>
-        
-        {/* Special Filters - Added source filters */}
+
+        {/* Special Filters */}
         <div className="filter-section">
           <h3>Special Filters</h3>
-          <label className="filter-checkbox">
-            <input 
-              type="checkbox"
-              checked={filters.specialFilters.userUploaded}
-              onChange={() => handleFilterChange('specialFilters', 'userUploaded')}
-            />
-            <span className="checkmark"></span>
-            User Uploaded Books
-          </label>
-          <label className="filter-checkbox">
-            <input 
+          {/* <label className="filter-checkbox">
+            <input
               type="checkbox"
               checked={filters.specialFilters.gutendexBooks}
-              onChange={() => handleFilterChange('specialFilters', 'gutendexBooks')}
+              onChange={() => handleFilterChange("specialFilters", "gutendexBooks")}
             />
-            <span className="checkmark"></span>
-            Gutendex Library Books
-          </label>
+            <span className={`checkmark ${filters.specialFilters.gutendexBooks ? 'checked' : ''}`}></span>
+            Gutendx Library Books
+          </label> */}
           <label className="filter-checkbox">
-            <input 
+            <input
               type="checkbox"
               checked={filters.specialFilters.mostRated}
-              onChange={() => handleFilterChange('specialFilters', 'mostRated')}
+              onChange={() => handleFilterChange("specialFilters", "mostRated")}
             />
-            <span className="checkmark"></span>
-            Most Rated
+            <span className={`checkmark ${filters.specialFilters.mostRated ? 'checked' : ''}`}></span>
+            Rated Books
           </label>
           <label className="filter-checkbox">
-            <input 
+            <input
               type="checkbox"
               checked={filters.specialFilters.bookBagaichaWriters}
-              onChange={() => handleFilterChange('specialFilters', 'bookBagaichaWriters')}
+              onChange={() => handleFilterChange("specialFilters", "bookBagaichaWriters")}
             />
-            <span className="checkmark"></span>
-            BookBagaicha Writers
+            <span className={`checkmark ${filters.specialFilters.bookBagaichaWriters ? 'checked' : ''}`}></span>
+            By BookBagaicha Writers
           </label>
         </div>
-        
-        {/* Genre Filters */}
-        <div className="filter-section">
-          <h3>Genres</h3>
-          {Object.keys(filters.genres).map(genre => (
-            <label key={genre} className="filter-checkbox">
-              <input 
-                type="checkbox"
-                checked={filters.genres[genre]}
-                onChange={() => handleFilterChange('genres', genre)}
-              />
-              <span className="checkmark"></span>
-              {genre}
-            </label>
-          ))}
-        </div>
-        
-        {/* Upload Time Filters */}
+
+        {/* Upload Time */}
         <div className="filter-section">
           <h3>Upload Time</h3>
           <label className="filter-checkbox">
-            <input 
+            <input
               type="checkbox"
               checked={filters.uploadTime.recent}
-              onChange={() => handleFilterChange('uploadTime', 'recent')}
+              onChange={() => handleFilterChange("uploadTime", "recent")}
             />
-            <span className="checkmark"></span>
+            <span className={`checkmark ${filters.uploadTime.recent ? 'checked' : ''}`}></span>
             Last 30 days
           </label>
           <label className="filter-checkbox">
-            <input 
+            <input
               type="checkbox"
               checked={filters.uploadTime.month}
-              onChange={() => handleFilterChange('uploadTime', 'month')}
+              onChange={() => handleFilterChange("uploadTime", "month")}
             />
-            <span className="checkmark"></span>
+            <span className={`checkmark ${filters.uploadTime.month ? 'checked' : ''}`}></span>
             Last 3 months
           </label>
           <label className="filter-checkbox">
-            <input 
+            <input
               type="checkbox"
               checked={filters.uploadTime.year}
-              onChange={() => handleFilterChange('uploadTime', 'year')}
+              onChange={() => handleFilterChange("uploadTime", "year")}
             />
-            <span className="checkmark"></span>
+            <span className={`checkmark ${filters.uploadTime.year ? 'checked' : ''}`}></span>
             Last year
           </label>
         </div>
-        
+
         {/* Language Filters */}
         <div className="filter-section">
           <h3>Languages</h3>
-          {Object.keys(filters.languages).map(language => (
-            <label key={language} className="filter-checkbox">
-              <input 
+          {Object.keys(filters.languages).map(lang => (
+            <label key={lang} className="filter-checkbox">
+              <input
                 type="checkbox"
-                checked={filters.languages[language]}
-                onChange={() => handleFilterChange('languages', language)}
+                checked={filters.languages[lang]}
+                onChange={() => handleFilterChange("languages", lang)}
               />
-              <span className="checkmark"></span>
-              {language}
+              <span className={`checkmark ${filters.languages[lang] ? 'checked' : ''}`}></span>
+              {lang}
             </label>
           ))}
         </div>
       </div>
-      
-      {/* Main Content */}
-      <div className={`explore-filter ${filterOpen ? 'open' : 'closed'}`}>
+
+      <div className="explore-filter open">
         <h1 className="explore-title">Explore Books</h1>
-        
         {error && <p className="error-message">{error}</p>}
-        
+
         {isLoading ? (
           <div className="loading-container">
             <div className="loader"></div>
@@ -388,7 +386,6 @@ const Explore = () => {
               </div>
             ) : (
               <div className="books-container">
-                {/* Top Row */}
                 <div className="books-row">
                   {topRowBooks.map((book, index) => (
                     <div
@@ -396,102 +393,63 @@ const Explore = () => {
                       className="book-card"
                       onClick={() => navigate(`/book/${book._id}`, { state: { book } })}
                     >
-                      <div className="book-cover-container">
-                        <img
-                          src={
-                            book.coverImage?.startsWith("http")
-                              ? book.coverImage
-                              : `http://localhost:1000${book.coverImage}`
-                          }
-                          alt={book.title}
-                          className="book-cover"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = "/default-book.jpg"; // fallback if image is missing
-                          }}
-                        />
-
-                      </div>
-                      <div className="book-info">
-                        <h3 className="book-title">{book.title}</h3>
-                        <p className="book-author">by {book.author}</p>
-                        {book.genre && <span className="book-genre">{book.genre}</span>}
-                        {book.isBookBagaichaWriter && <span className="book-badge">BookBagaicha Writer</span>}
-                        {/* Add source indicator */}
-                        {book.isFromGutendex ? 
-                          <span className="book-source">Gutendex Library</span> : 
-                          <span className="book-source">User Uploaded</span>
+                      <img
+                        src={
+                          book.coverImage && book.coverImage.startsWith("http")
+                            ? book.coverImage
+                            : `http://localhost:1000${book.coverImage || '/default-cover.jpg'}`
                         }
-                      </div>
+                        alt={book.title}
+                        className="book-cover"
+                        onError={(e) => {
+                          e.target.src = '/default-cover.jpg'; // Fallback image
+                        }}
+                      />
+                      <div className="book-title">{book.title}</div>
+                      <div className="book-author">{book.author}</div>
                     </div>
                   ))}
                 </div>
-                
-                {/* Bottom Row */}
                 <div className="books-row">
                   {bottomRowBooks.map((book, index) => (
                     <div
-                      key={book._id || `book-b-${index}`}
+                      key={book._id || `book-${index}`}
                       className="book-card"
                       onClick={() => navigate(`/book/${book._id}`, { state: { book } })}
                     >
-                      <div className="book-cover-container">
-                        <img
-                          src={
-                            book.coverImage?.startsWith("http")
-                              ? book.coverImage
-                              : `http://localhost:1000${book.coverImage}`
-                          }
-                          alt={book.title}
-                          className="book-cover"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = "/default-book.jpg"; // fallback if image is missing
-                          }}
-                        />
-                      </div>
-                      <div className="book-info">
-                        <h3 className="book-title">{book.title}</h3>
-                        <p className="book-author">by {book.author}</p>
-                        {book.genre && <span className="book-genre">{book.genre}</span>}
-                        {book.isBookBagaichaWriter && <span className="book-badge">BookBagaicha Writer</span>}
-                        {/* Add source indicator */}
-                        {book.isFromGutendex ? 
-                          <span className="book-source">Gutendex Library</span> : 
-                          <span className="book-source">User Uploaded</span>
+                      <img
+                        src={
+                          book.coverImage && book.coverImage.startsWith("http")
+                            ? book.coverImage
+                            : `http://localhost:1000${book.coverImage || '/default-cover.jpg'}`
                         }
-                      </div>
+                        alt={book.title}
+                        className="book-cover"
+                        onError={(e) => {
+                          e.target.src = '/default-cover.jpg'; // Fallback image
+                        }}
+                      />
+                      <div className="book-title">{book.title}</div>
+                      <div className="book-author">{book.author}</div>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-            
-            {/* Pagination Controls */}
-            {filteredBooks.length > 0 && (
-              <div className="pagination-controls">
-                <button 
-                  className="pagination-button" 
-                  onClick={prevPage} 
-                  disabled={currentPage === 1}
-                >
-                  &laquo; Previous
-                </button>
-                
-                <span className="page-indicator">
-                  Page {currentPage} of {totalPages}
-                </span>
-                
-                <button 
-                  className="pagination-button" 
-                  onClick={nextPage} 
-                  disabled={currentPage === totalPages || totalPages === 0}
-                >
-                  Next &raquo;
-                </button>
-              </div>
-            )}
           </>
+        )}
+
+        {/* Pagination */}
+        {filteredBooks.length > booksPerPage && (
+          <div className="pagination">
+            <button onClick={prevPage} disabled={currentPage === 1}>
+              Previous
+            </button>
+            <span>Page {currentPage} of {Math.ceil(filteredBooks.length / booksPerPage)}</span>
+            <button onClick={nextPage} disabled={currentPage === Math.ceil(filteredBooks.length / booksPerPage)}>
+              Next
+            </button>
+          </div>
         )}
       </div>
     </div>

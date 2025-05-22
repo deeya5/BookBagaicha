@@ -296,22 +296,22 @@ const OnlineBookReader = () => {
 
       <div className="book-reader-content">
         {pdfUrl ? (
-          <div className="pdf-container">
-            <iframe
-              src={pdfUrl}
-              title={book.title}
-              width="100%"
-              height="800px"
-              style={{ border: "none" }}
-            />
-          </div>
-        ) : content ? (
-          <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
-            {content}
-          </pre>
-        ) : !epubUrl ? (
-          <p className="loading-text">No readable content available for this book.</p>
-        ) : null}
+  <div className="pdf-container">
+    <embed
+      src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&page=1&zoom=100`}
+      type="application/pdf"
+      width="100%"
+      height="800px"
+      style={{ border: "none" }}
+    />
+  </div>
+) : content ? (
+  <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
+    {content}
+  </pre>
+) : !epubUrl ? (
+  <p className="loading-text">No readable content available for this book.</p>
+) : null}
       </div>
     </div>
   );
