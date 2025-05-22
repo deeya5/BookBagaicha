@@ -35,11 +35,11 @@
   
   .login-form form input {
     width: 80%;
-    padding: 0.6rem;
+    padding: 0.9rem;
     margin-bottom: 1rem;
     border: 1px solid #ccc;
     border-radius: 8px;
-    font-size: 0.5rem;
+    font-size: 0.7rem;
   }
   
   .login-form form input:focus {

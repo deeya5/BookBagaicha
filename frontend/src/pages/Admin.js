@@ -3,115 +3,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/Admin.css";
 import logo from "../assets/logo.png";
-import userIcon from "../assets/romance.jpg";
+import userIcon from "../assets/adminprofile.jpg";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
-// Add custom styles
-const customStyles = {
-  manage: {
-    backgroundColor: "rgb(60, 124, 86)",
-    color: "#fff",
-    border: "none",
-    padding: "6px 14px",
-    borderRadius: "6px",
-    fontSize: "14px",
-    cursor: "pointer",
-    transition: "background-color 0.2s ease-in-out",
-  },
-  manageHover: {
-    backgroundColor: "rgb(31, 100, 69)",
-  },
-  errorMessage: {
-    color: "#e63946",
-    fontWeight: "bold",
-    marginTop: "10px",
-  },
-  modalOverlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 999,
-  },
-  modalContent: {
-    background: "white",
-    padding: "2rem",
-    borderRadius: "10px",
-    width: "90%",
-    maxWidth: "500px",
-    boxShadow: "0 0 10px rgba(0,0,0,0.3)",
-  },
-  modalTitle: {
-    marginTop: 0,
-    borderBottom: "1px solid #eee",
-    paddingBottom: "10px",
-    color: "#333",
-  },
-  formGroup: {
-    marginBottom: "1rem",
-  },
-  formLabel: {
-    display: "block",
-    fontWeight: "bold",
-    marginBottom: "0.5rem",
-    color: "#555",
-  },
-  formInput: {
-    width: "100%",
-    padding: "0.5rem",
-    border: "1px solid #ccc",
-    borderRadius: "5px",
-    fontSize: "14px",
-  },
-  modalActions: {
-    display: "flex",
-    justifyContent: "flex-end",
-    gap: "1rem",
-    marginTop: "1.5rem",
-  },
-  approveButton: {
-    padding: "0.5rem 1rem",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-    backgroundColor: "#4CAF50",
-    color: "white",
-    fontWeight: "bold",
-  },
-  deleteButton: {
-    padding: "0.5rem 1rem",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-    backgroundColor: "#f44336",
-    color: "white",
-    fontWeight: "bold",
-  },
-  cancelButton: {
-    padding: "0.5rem 1rem",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-    backgroundColor: "#777",
-    color: "white",
-  },
-  bookDesc: {
-    maxHeight: "120px",
-    overflowY: "auto",
-    padding: "10px",
-    border: "1px solid #eee",
-    borderRadius: "5px",
-    fontSize: "14px",
-    backgroundColor: "#f9f9f9",
-    marginBottom: "15px",
-  },
-};
 
 const Admin = () => {
   const [adminName, setAdminName] = useState("");
@@ -124,7 +18,7 @@ const Admin = () => {
   const [users, setUsers] = useState([]);
   const [authors, setAuthors] = useState([]);
   const [books, setBooks] = useState([]);
-  const [pendingBooks, setPendingBooks] = useState([]); // New separate state for pending books
+  const [pendingBooks, setPendingBooks] = useState([]);
   const [genres, setGenres] = useState([]);
   const [activityLog, setActivityLog] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -140,10 +34,30 @@ const Admin = () => {
   const allowedRoles = ["admin_user", "admin_book", "super_admin"];
   const navigate = useNavigate();
 
+  // Define permissions based on the role
+  const getPermissions = (userRole) => {
+    switch (userRole) {
+      case "super_admin":
+        return ["dashboard", "users", "authors", "books", "genres", "reviews", "admins", "booksToApprove"];
+      case "admin_user":
+        return ["dashboard", "users", "authors"];
+      case "admin_book":
+        return ["dashboard", "books", "genres", "reviews", "booksToApprove"];
+      default:
+        return ["dashboard"];
+    }
+  };
+
+  const userPermissions = getPermissions(role);
+
+  // Check if user has permission for a specific action
+  const hasPermission = (permission) => {
+    return userPermissions.includes(permission);
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("authToken"); 
-    // console.log("Stored role:", role);
-    // console.log("Token:", token);
+    
     if (!allowedRoles.includes(role)) {
       setError("Access Denied: You do not have permission to view this page.");
       navigate("/Login");
@@ -156,26 +70,62 @@ const Admin = () => {
         setAdminName(admin || "Admin");
         if (!token) return setError("Authentication token is missing.");
   
-        const [usersRes, booksRes, genresRes, activityLogRes] = await Promise.all([
-          axios.get("http://localhost:1000/api/v1/get-total-users", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get("http://localhost:1000/api/v1/get-all-books", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get("http://localhost:1000/api/v1/get-total-genres", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+        // Only fetch data that the user has permission to see
+        const requests = [];
+        
+        if (hasPermission("users")) {
+          requests.push(
+            axios.get("http://localhost:1000/api/v1/get-total-users", {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+          );
+        }
+
+        if (hasPermission("books")) {
+          requests.push(
+            axios.get("http://localhost:1000/api/v1/get-all-books", {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+          );
+        }
+
+        if (hasPermission("genres")) {
+          requests.push(
+            axios.get("http://localhost:1000/api/v1/get-total-genres", {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+          );
+        }
+
+        // Activity log for all admin roles
+        requests.push(
           axios.get("http://localhost:1000/api/v1/activity-log", {
             headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
-  
-        setTotalUsers(usersRes.data.totalUsers || 0);
-        setBooks(booksRes.data.data || []);
-        setTotalBooks((booksRes.data.data || []).length);
-        setTotalGenres(genresRes.data.totalGenres || 0);
-        setActivityLog(Array.isArray(activityLogRes.data) ? activityLogRes.data : []);
+          })
+        );
+
+        const results = await Promise.all(requests);
+        let resultIndex = 0;
+
+        if (hasPermission("users")) {
+          setTotalUsers(results[resultIndex]?.data.totalUsers || 0);
+          resultIndex++;
+        }
+
+        if (hasPermission("books")) {
+          setBooks(results[resultIndex]?.data.data || []);
+          setTotalBooks((results[resultIndex]?.data.data || []).length);
+          resultIndex++;
+        }
+
+        if (hasPermission("genres")) {
+          setTotalGenres(results[resultIndex]?.data.totalGenres || 0);
+          resultIndex++;
+        }
+
+        // Activity log is always the last request
+        setActivityLog(Array.isArray(results[results.length - 1]?.data) ? results[results.length - 1].data : []);
+        
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
         setError("Failed to load dashboard data.");
@@ -183,42 +133,46 @@ const Admin = () => {
     };
   
     fetchDashboardData();
-  }, [navigate, token, role, allowedRoles]);
-  
-  // Fixed rolePermissions - using 'role' instead of 'userRole'
-  const rolePermissions = {
-    "users": role === "super_admin" || role === "admin_user",
-    "books": role === "super_admin" || role === "admin_book",
-    "genres": role === "super_admin" || role === "admin_book",
-    "authors": role === "super_admin" || role === "admin_book",
-    "reviews": role === "super_admin" || role === "admin_book",
-    "admins": role === "super_admin",
-    "booksToApprove": role === "super_admin" || role === "admin_book"
-  };
+  }, [navigate, token, role]);
 
   const handleViewChange = (view, fetchFn) => {
-    if (!rolePermissions[view]) {
-      setError("Access Denied: You do not have permission to access this section.");
-      toast.warn("You do not have permission to access this section.");
+    if (!hasPermission(view)) {
+      setError(`Access Denied: You do not have permission to access ${view}.`);
+      toast.warn(`You do not have permission to access ${view}.`);
       return;
     }
   
     setCurrentView(view);
+    setError(""); // Clear any previous errors
     if (fetchFn) fetchFn();
   };
 
-  const fetchUsersByRole = async (role) => {
+  const fetchUsersByRole = async (targetRole) => {
+    // Fixed permission check - check the actual permission needed, not the target role
+    const permission = targetRole === "user" ? "users" : "authors";
+    
+    if (!hasPermission(permission)) {
+      toast.error(`You don't have permission to view ${targetRole}s`);
+      return;
+    }
+
     try {
-      const res = await axios.get(`http://localhost:1000/api/v1/users/role/${role}`, {
+      const res = await axios.get(`http://localhost:1000/api/v1/users/role/${targetRole}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      role === "user" ? setUsers(res.data) : setAuthors(res.data);
+      targetRole === "user" ? setUsers(res.data) : setAuthors(res.data);
     } catch (err) {
-      console.error(`Error fetching ${role}s:`, err);
+      console.error(`Error fetching ${targetRole}s:`, err);
+      toast.error(`Failed to fetch ${targetRole}s`);
     }
   };
 
   const fetchAllAdmins = async () => {
+    if (!hasPermission("admins")) {
+      toast.error("You don't have permission to view admins");
+      return;
+    }
+
     try {
       const roles = ["admin_user", "admin_book", "super_admin"];
       const promises = roles.map(role =>
@@ -232,10 +186,16 @@ const Admin = () => {
       setAdmins(allAdmins);
     } catch (err) {
       console.error("Error fetching all admins:", err);
+      toast.error("Failed to fetch admins");
     }
   };
   
   const fetchBooks = async () => {
+    if (!hasPermission("books")) {
+      toast.error("You don't have permission to view books");
+      return;
+    }
+
     try {
       const res = await axios.get("http://localhost:1000/api/v1/get-all-books", {
         headers: { Authorization: `Bearer ${token}` },
@@ -243,10 +203,16 @@ const Admin = () => {
       setBooks(res.data.data || []);
     } catch (err) {
       console.error("Error fetching books:", err);
+      toast.error("Failed to fetch books");
     }
   };
 
   const fetchGenres = async () => {
+    if (!hasPermission("genres")) {
+      toast.error("You don't have permission to view genres");
+      return;
+    }
+
     try {
       const res = await axios.get("http://localhost:1000/api/v1/get-all-genres", {
         headers: { Authorization: `Bearer ${token}` },
@@ -254,10 +220,16 @@ const Admin = () => {
       setGenres(res.data.genres || []);
     } catch (err) {
       console.error("Error fetching genres:", err);
+      toast.error("Failed to fetch genres");
     }
   };
 
   const fetchReviews = async () => {
+    if (!hasPermission("reviews")) {
+      toast.error("You don't have permission to view reviews");
+      return;
+    }
+
     try {
       const res = await axios.get("http://localhost:1000/api/v1/reviews/get-all-reviews", {
         headers: { Authorization: `Bearer ${token}` },
@@ -265,10 +237,43 @@ const Admin = () => {
       setReviews(res.data.reviews || []);
     } catch (err) {
       console.error("Error fetching reviews:", err);
+      toast.error("Failed to fetch reviews");
+    }
+  };
+
+  const fetchBooksToApprove = async () => {
+    if (!hasPermission("booksToApprove")) {
+      toast.error("You don't have permission to view books pending approval");
+      return;
+    }
+
+    try {
+      const res = await axios.get("http://localhost:1000/api/v1/uploaded-books?pending=true", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      setPendingBooks(res.data.books || []);
+    } catch (err) {
+      console.error("Error fetching Book Bagaicha Original books pending approval:", err);
+      toast.error("Failed to load original books pending approval");
     }
   };
 
   const deleteItem = async (type, id) => {
+    // Check permissions before deleting
+    const permissionMap = {
+      "user": "users",
+      "author": "authors", 
+      "book": "books",
+      "genre": "genres",
+      "review": "reviews"
+    };
+
+    if (!hasPermission(permissionMap[type])) {
+      toast.error(`You don't have permission to delete ${type}s`);
+      return;
+    }
+
     try {
       if (!id) {
         console.error("Cannot delete: No ID provided");
@@ -290,23 +295,44 @@ const Admin = () => {
   
   const reload = (type) => {
     switch (type) {
-      case "user": fetchUsersByRole("user"); break;
-      case "author": fetchUsersByRole("author"); break;
+      case "user": 
+        if (hasPermission("users")) fetchUsersByRole("user"); 
+        break;
+      case "author": 
+        if (hasPermission("authors")) fetchUsersByRole("author"); 
+        break;
       case "book": 
-        // Check the current view before deciding which fetch to call
-        if (currentView === "booksToApprove") {
+        if (currentView === "booksToApprove" && hasPermission("booksToApprove")) {
           fetchBooksToApprove(); 
-        } else {
+        } else if (hasPermission("books")) {
           fetchBooks();
         }
         break;
-      case "genre": fetchGenres(); break;
-      case "review": fetchReviews(); break;
+      case "genre": 
+        if (hasPermission("genres")) fetchGenres(); 
+        break;
+      case "review": 
+        if (hasPermission("reviews")) fetchReviews(); 
+        break;
       default: break;
     }
   };
 
   const handleSubmit = async () => {
+    // Check permissions before creating/updating
+    const permissionMap = {
+      "user": "users",
+      "author": "authors",
+      "book": "books", 
+      "genre": "genres",
+      "review": "reviews"
+    };
+
+    if (!hasPermission(permissionMap[formType])) {
+      toast.error(`You don't have permission to ${formId ? 'update' : 'create'} ${formType}s`);
+      return;
+    }
+
     try {
       const url = formId
         ? `http://localhost:1000/api/v1/${formType}s/${formId}`
@@ -328,29 +354,19 @@ const Admin = () => {
     }
   };
 
-  const fetchBooksToApprove = async () => {
-    try {
-      const res = await axios.get("http://localhost:1000/api/v1/uploaded-books?pending=true", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      
-      // Set the pending books to a separate state
-      setPendingBooks(res.data.books || []);
-    } catch (err) {
-      console.error("Error fetching Book Bagaicha Original books pending approval:", err);
-      toast.error("Failed to load original books pending approval");
-    }
-  };
-
   const approveBook = async (bookId) => {
+    if (!hasPermission("booksToApprove")) {
+      toast.error("You don't have permission to approve books");
+      return;
+    }
+
     try {
       await axios.put(`http://localhost:1000/api/v1/approve-book/${bookId}`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Book approved successfully!");
-      fetchBooksToApprove(); // refresh the list
+      fetchBooksToApprove();
       
-      // Log activity for approval
       try {
         await axios.post("http://localhost:1000/api/v1/activity-log", {
           action: "BOOK_APPROVED",
@@ -368,15 +384,19 @@ const Admin = () => {
   };
 
   const deleteBookToApprove = async (bookId) => {
+    if (!hasPermission("booksToApprove")) {
+      toast.error("You don't have permission to delete pending books");
+      return;
+    }
+
     try {
       const url = `http://localhost:1000/api/v1/books/${bookId}`;
       await axios.delete(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Book deleted successfully!");
-      fetchBooksToApprove(); // Only refresh the pending books list
+      fetchBooksToApprove();
       
-      // Log activity for deletion
       try {
         await axios.post("http://localhost:1000/api/v1/activity-log", {
           action: "BOOK_DELETED",
@@ -394,6 +414,20 @@ const Admin = () => {
   };
 
   const openManageModal = (item, type) => {
+    // Check permissions before opening modal
+    const permissionMap = {
+      "user": "users",
+      "author": "authors",
+      "book": "books",
+      "genre": "genres", 
+      "review": "reviews"
+    };
+
+    if (!hasPermission(permissionMap[type])) {
+      toast.error(`You don't have permission to manage ${type}s`);
+      return;
+    }
+
     let filteredItem = item;
   
     if (type === "user" || type === "author") {
@@ -410,7 +444,7 @@ const Admin = () => {
         _id: item._id,
         title: item.title,
         author: item.author,
-        genre: item.genre, // ensure this is either genre ID or name for editing
+        genre: item.genre,
         desc: item.desc,
         coverImage: item.coverImage,
         url: item.url
@@ -423,10 +457,13 @@ const Admin = () => {
     setIsModalOpen(true);
   };
   
-  // Open modal for pending book approval
   const openApprovalModal = (book) => {
+    if (!hasPermission("booksToApprove")) {
+      toast.error("You don't have permission to manage book approvals");
+      return;
+    }
+
     setForm({
-      _id: book._id,
       title: book.title,
       author: book.author,
       genre: book.genre?.name || "N/A",
@@ -447,6 +484,7 @@ const Admin = () => {
     setFormType(null);
   };
 
+
   return (
     <div className="admin-container">
       <aside className="admin-sidebar">
@@ -462,7 +500,7 @@ const Admin = () => {
           <button onClick={() => handleViewChange("genres", fetchGenres)}>Genres</button>
           <button onClick={() => handleViewChange("reviews", fetchReviews)}>Ratings & Reviews</button>
           <button onClick={() => handleViewChange("admins", fetchAllAdmins)}>Admins</button>
-          <button onClick={() => handleViewChange("booksToApprove", fetchBooksToApprove)}>Books to Approve</button>
+          <button onClick={() => handleViewChange("booksToApprove", fetchBooksToApprove)}>BooksBagaicha Originals</button>
         </nav>
       </aside>
   
@@ -514,7 +552,6 @@ const Admin = () => {
         {currentView === "users" && (
           <section className="users-section">
             <h2>Readers</h2>
-            <button className="add-button" onClick={() => openManageModal({}, "user")}>Add New</button>
             <table className="users-table">
               <thead>
                 <tr><th>Name</th><th>Email</th><th>Actions</th></tr>
@@ -527,9 +564,6 @@ const Admin = () => {
                     <td>
                       <button 
                         className="manage-button" 
-                        style={customStyles.manage}
-                        onMouseOver={(e) => Object.assign(e.target.style, customStyles.manageHover)}
-                        onMouseOut={(e) => Object.assign(e.target.style, customStyles.manage)}
                         onClick={() => openManageModal(user, "user")}
                       >
                         Manage
@@ -545,7 +579,6 @@ const Admin = () => {
         {currentView === "authors" && (
           <section className="authors-section">
             <h2>Authors</h2>
-            <button className="add-button" onClick={() => openManageModal({}, "author")}>Add New</button>
             <table className="authors-table">
               <thead>
                 <tr><th>Name</th><th>Email</th><th>Actions</th></tr>
@@ -558,9 +591,6 @@ const Admin = () => {
                     <td>
                       <button 
                         className="manage-button" 
-                        style={customStyles.manage}
-                        onMouseOver={(e) => Object.assign(e.target.style, customStyles.manageHover)}
-                        onMouseOut={(e) => Object.assign(e.target.style, customStyles.manage)}
                         onClick={() => openManageModal(author, "author")}
                       >
                         Manage
@@ -577,7 +607,6 @@ const Admin = () => {
           <section className="books-section">
             <h2>Books</h2>
             <button className="add-button" onClick={() => openManageModal({}, "book")}>Add New</button>
-            <p>Total Books: {books.length}</p>
             <table className="books-table">
               <thead>
                 <tr><th>Title</th><th>Author</th><th>Genre</th><th>Actions</th></tr>
@@ -591,9 +620,6 @@ const Admin = () => {
                     <td>
                       <button 
                         className="manage-button" 
-                        style={customStyles.manage}
-                        onMouseOver={(e) => Object.assign(e.target.style, customStyles.manageHover)}
-                        onMouseOut={(e) => Object.assign(e.target.style, customStyles.manage)}
                         onClick={() => openManageModal(book, "book")}
                       >
                         Manage
@@ -609,7 +635,6 @@ const Admin = () => {
         {currentView === "genres" && (
           <section className="genres-section">
             <h2>Genres</h2>
-            <button className="add-button" onClick={() => openManageModal({}, "genre")}>Add New</button>
             <table className="genres-table">
               <thead>
                 <tr><th>Name</th><th>Book Count</th><th>Actions</th></tr>
@@ -622,9 +647,6 @@ const Admin = () => {
                     <td>
                       <button 
                         className="manage-button" 
-                        style={customStyles.manage}
-                        onMouseOver={(e) => Object.assign(e.target.style, customStyles.manageHover)}
-                        onMouseOut={(e) => Object.assign(e.target.style, customStyles.manage)}
                         onClick={() => openManageModal(genre, "genre")}
                       >
                         Manage
@@ -655,9 +677,6 @@ const Admin = () => {
                       <td>
                         <button 
                           className="manage-button" 
-                          style={customStyles.manage}
-                          onMouseOver={(e) => Object.assign(e.target.style, customStyles.manageHover)}
-                          onMouseOut={(e) => Object.assign(e.target.style, customStyles.manage)}
                           onClick={() => openManageModal(review, "review")}
                         >
                           Manage
@@ -698,9 +717,6 @@ const Admin = () => {
                       <td>
                         <button 
                           className="manage-button" 
-                          style={customStyles.manage}
-                          onMouseOver={(e) => Object.assign(e.target.style, customStyles.manageHover)}
-                          onMouseOut={(e) => Object.assign(e.target.style, customStyles.manage)}
                           onClick={() => openManageModal(admin, "user")}
                         >
                           Manage
@@ -720,7 +736,7 @@ const Admin = () => {
 
         {currentView === "booksToApprove" && (
           <section className="pending-books-section">
-            <h2>Book Bagaicha Originals Pending Approval</h2>
+            <h2>Book Bagaicha Originals </h2>
             {pendingBooks.length === 0 ? (
               <p>No Book Bagaicha Original books pending approval.</p>
             ) : (
@@ -744,9 +760,6 @@ const Admin = () => {
                       <td>
                         <button 
                           className="manage-button" 
-                          style={customStyles.manage}
-                          onMouseOver={(e) => Object.assign(e.target.style, customStyles.manageHover)}
-                          onMouseOut={(e) => Object.assign(e.target.style, customStyles.manage)}
                           onClick={() => openApprovalModal(book)}
                         >
                           Manage
@@ -762,9 +775,9 @@ const Admin = () => {
       </main>
 
       {isModalOpen && (
-        <div className="modal-overlay" style={customStyles.modalOverlay}>
-          <div className="modal-content" style={customStyles.modalContent}>
-            <h3 style={customStyles.modalTitle}>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3 className="modal-title">
               {formType === "pendingBook" 
                 ? "Book Approval" 
                 : formId 
@@ -781,20 +794,11 @@ const Admin = () => {
                   <p><strong>Genre:</strong> {form.genre}</p>
                   <p><strong>Upload Date:</strong> {form.createdAt}</p>
                   <p><strong>Description:</strong></p>
-                  <div style={customStyles.bookDesc}>{form.desc}</div>
+                  <div className="book-desc">{form.desc}</div>
                   
-                  <div style={customStyles.modalActions}>
+                  <div className="modal-actions">
                     <button 
-                      style={customStyles.approveButton} 
-                      onClick={() => {
-                        approveBook(formId);
-                        closeManageModal();
-                      }}
-                    >
-                      Approve
-                    </button>
-                    <button 
-                      style={customStyles.deleteButton} 
+                      className="delete-button" 
                       onClick={() => {
                         deleteBookToApprove(formId);
                         closeManageModal();
@@ -802,17 +806,17 @@ const Admin = () => {
                     >
                       Delete
                     </button>
-                    <button style={customStyles.cancelButton} onClick={closeManageModal}>Cancel</button>
+                    <button className="cancel-button" onClick={closeManageModal}>Cancel</button>
                   </div>
                 </div>
               </>
             ) : (
               <>
                 {Object.keys(form).map((key) => (
-                  <div key={key} className="form-group" style={customStyles.formGroup}>
-                    <label style={customStyles.formLabel}>{key}</label>
+                  <div key={key} className="form-group">
+                    <label className="form-label">{key}</label>
                     <input
-                      style={customStyles.formInput}
+                      className="form-input"
                       value={form[key] || ""}
                       onChange={(e) =>
                         setForm({ ...form, [key]: e.target.value })
@@ -820,22 +824,22 @@ const Admin = () => {
                     />
                   </div>
                 ))}
-                <div className="modal-actions" style={customStyles.modalActions}>
+                <div className="modal-actions">
                   <button 
-                    style={customStyles.approveButton} 
+                    className="approve-button" 
                     onClick={handleSubmit}
                   >
                     {formId ? "Update" : "Create"}
                   </button>
                   {formId && (
                     <button 
-                      style={customStyles.deleteButton} 
+                      className="delete-button" 
                       onClick={() => deleteItem(formType, formId)}
                     >
                       Delete
                     </button>
                   )}
-                  <button style={customStyles.cancelButton} onClick={closeManageModal}>Cancel</button>
+                  <button className="cancel-button" onClick={closeManageModal}>Cancel</button>
                 </div>
               </>
             )}

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../styles/library.css";
 import { useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Library = () => {
   const [currentReads, setCurrentReads] = useState([]);
@@ -26,14 +28,13 @@ const Library = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        
+
         const books = response.data;
 
         if (Array.isArray(books) && books.length) {
-          setCurrentReads(books.filter((book) => book.currentlyReading));
-          setLibraryBooks(books);
-        } else {
-          setError("No books found in your library.");
+          const currentReads = books.filter((book) => book.currentlyReading);
+          setCurrentReads(currentReads);
+          setLibraryBooks(books.filter((book) => !book.currentlyReading));
         }
       } catch (error) {
         console.error("Error fetching library books:", error);
@@ -56,7 +57,7 @@ const Library = () => {
     const token = localStorage.getItem("authToken");
 
     if (!token) {
-      setError("You need to log in first.");
+      toast.error("You need to log in first.");
       return;
     }
 
@@ -71,15 +72,17 @@ const Library = () => {
       );
       setLibraryBooks((prev) => prev.filter((book) => book._id !== libraryEntryId));
       setCurrentReads((prev) => prev.filter((book) => book._id !== libraryEntryId));
-      alert(response.data.message);
+      toast.success(response.data.message);
     } catch (error) {
       console.error("Error deleting book:", error);
-      alert("Failed to delete book.");
+      toast.error("Failed to delete book.");
     }
   };
 
   const renderBookCard = (bookEntry) => {
     const book = bookEntry.book;
+
+    if (!book) return null; // Prevent rendering if book is null
 
     return (
       <div
@@ -108,6 +111,7 @@ const Library = () => {
           className="delete-icon"
           onClick={(e) => {
             e.stopPropagation();
+            console.log("Deleting entry ID:", bookEntry._id);
             handleDeleteBook(bookEntry._id);
           }}
         >
@@ -127,9 +131,7 @@ const Library = () => {
           {/* Current Reads Section */}
           <div className="section">
             <div className="section-header">Current Reads</div>
-            <div className="books-list">
-              {currentReads.map(renderBookCard)}
-            </div>
+            <div className="books-list">{currentReads.map(renderBookCard)}</div>
           </div>
 
           <hr className="divider" />
@@ -137,12 +139,23 @@ const Library = () => {
           {/* Added to Library Section */}
           <div className="section">
             <div className="section-header">Added to Library</div>
-            <div className="books-list">
-              {libraryBooks.map(renderBookCard)}
-            </div>
+            <div className="books-list">{libraryBooks.map(renderBookCard)}</div>
           </div>
         </>
       )}
+
+      {/* Toast container to display toasts */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
     </div>
   );
 };

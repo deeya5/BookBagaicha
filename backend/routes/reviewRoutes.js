@@ -20,6 +20,49 @@ router.get("/get-all-reviews", async (req, res) => {
   }
 });
 
+
+
+router.put("/:reviewId", authenticateToken, async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    const userId = req.user.id;
+    const { rating, comment } = req.body;
+
+    // Validate reviewId
+    if (!mongoose.Types.ObjectId.isValid(reviewId)) {
+      return res.status(400).json({ message: "Invalid review ID" });
+    }
+
+    // At least rating or comment must be provided
+    if (rating === undefined && comment === undefined) {
+      return res.status(400).json({ message: "Please provide rating or comment to update" });
+    }
+
+    // Find the review by ID
+    const review = await Review.findById(reviewId);
+    if (!review) {
+      return res.status(404).json({ message: "Review not found" });
+    }
+
+    // Only allow review owner to update
+    if (review.user.toString() !== userId) {
+      return res.status(403).json({ message: "You are not authorized to update this review" });
+    }
+
+    // Update fields if provided
+    if (rating !== undefined) review.rating = rating;
+    if (comment !== undefined) review.comment = comment;
+
+    await review.save();
+
+    res.status(200).json({ message: "Review updated successfully", review });
+  } catch (error) {
+    console.error("Error updating review:", error);
+    res.status(500).json({ message: "Server error while updating review" });
+  }
+});
+
+
 //  POST a review for a book
 router.post("/:bookId", authenticateToken, async (req, res) => {
   try {

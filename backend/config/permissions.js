@@ -1,23 +1,14 @@
-const rolesPermissions = {
-    superadmin: {
-      users: ['create', 'read', 'update', 'delete'],
-      books: ['create', 'read', 'update', 'delete'],
-      genres: ['create', 'read', 'update', 'delete'],
-      authors: ['create', 'read', 'update', 'delete'],
-      admins: ['create', 'read', 'update', 'delete'],
-    },
-    admin_users: {
-      users: ['create', 'read', 'update', 'delete'],
-      authors: ['create', 'read', 'update', 'delete'],
-    },
-    admin_books: {
-      books: ['create', 'read', 'update', 'delete'],
-      genres: ['create', 'read', 'update', 'delete'],
-    },
-    user: {
-      books: ['read'],
-    },
-  };
-  
-  module.exports = rolesPermissions;
-  
+function assignPermissions(role) {
+  switch (role) {
+    case "super_admin":
+      return ["dashboard", "user", "author", "book", "genre", "review", "original"];
+    case "admin_user":
+      return ["dashboard", "user", "author"];
+    case "admin_book":
+      return ["dashboard", "book", "genre", "review", "original"];
+    default:
+      return [];
+  }
+}
+
+module.exports = { assignPermissions };

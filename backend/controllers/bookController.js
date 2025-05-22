@@ -133,43 +133,142 @@ const getBookById = async (req, res) => {
 };
 
 // controller to fetch book content by URL
-const fetchBookContent = async (req, res) => {
+const fetchContent = async (req, res) => {
+  const { url } = req.query;
+  
+  if (!url) {
+    return res.status(400).json({ success: false, message: "URL is required" });
+  }
+
   try {
-    const { url } = req.query;
-
-    if (!url || !url.startsWith("http")) {
-      return res.status(400).json({ message: "Invalid or missing URL." });
-    }
-
-    // Reject URLs that point to Gutenberg landing pages and EPUB files
-    if (url.includes("/ebooks/") && 
-        !url.includes(".txt") && 
-        !url.includes(".html") && 
-        url.includes(".epub")) {
-      return res.status(400).json({ 
-        message: "EPUB format not supported for direct reading. Please download the file instead."
+    // Configure axios with better timeout and retry options
+    const response = await axios.get(url, {
+      timeout: 20000, // 20 seconds timeout
+      responseType: 'text',
+      headers: {
+        'Accept': 'text/plain,text/html,application/xhtml+xml',
+        'User-Agent': 'BookBagaicha/1.0'
+      },
+      // Use a proxy if you have one configured (optional)
+      // proxy: {
+      //   host: 'your-proxy-host',
+      //   port: your-proxy-port
+      // },
+      maxContentLength: 20 * 1024 * 1024, // 20MB max size
+      maxRedirects: 5
+    });
+    
+    return res.status(200).send(response.data);
+  } catch (error) {
+    console.error("Error fetching content:", error);
+    
+    // Check if the error is from Project Gutenberg
+    if (url.includes('gutenberg.org')) {
+      return res.status(503).json({
+        success: false,
+        message: "Unable to connect to Project Gutenberg. The server might be temporarily unavailable.",
+        error: error.message
       });
     }
-
-    // For text files, fetch as text
-    const response = await axios.get(url, {
-      responseType: "text",
-      headers: {
-        // User agent to avoid being blocked by some servers
-        'User-Agent': 'Mozilla/5.0 (compatible; BookReaderBot/1.0)'
-      }
+    
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch content",
+      error: error.message
     });
-
-    res.setHeader("Content-Type", "text/plain");
-    res.send(response.data);
-  } catch (error) {
-    console.error("Failed to fetch external book content:", error.message);
-    res.status(500).json({ message: "Failed to fetch external book content." });
   }
 };
+
+// If you want to implement a more robust solution with retries and mirrors
+const fetchContentRobust = async (req, res) => {
+  const { url } = req.query;
+  
+  if (!url) {
+    return res.status(400).json({ success: false, message: "URL is required" });
+  }
+
+  const MAX_RETRIES = 3;
+  let currentRetry = 0;
+  let lastError = null;
+
+  // Function to try fetching with exponential backoff
+  const tryFetch = async (fetchUrl) => {
+    try {
+      const response = await axios.get(fetchUrl, {
+        timeout: 15000 + (currentRetry * 5000), // Increase timeout with each retry
+        responseType: 'text',
+        headers: {
+          'Accept': 'text/plain,text/html,application/xhtml+xml',
+          'User-Agent': 'BookBagaicha/1.0'
+        },
+        maxContentLength: 20 * 1024 * 1024,
+        maxRedirects: 5
+      });
+      
+      return { success: true, data: response.data };
+    } catch (error) {
+      lastError = error;
+      console.error(`Attempt ${currentRetry + 1} failed for ${fetchUrl}:`, error.message);
+      return { success: false, error };
+    }
+  };
+
+  // Generate alternative URLs for Project Gutenberg
+  const getAlternativeUrls = (originalUrl) => {
+    if (!originalUrl.includes('gutenberg.org')) return [];
+    
+    return [
+      // Mirror sites
+      originalUrl.replace('www.gutenberg.org', 'gutenberg.pglaf.org'),
+      originalUrl.replace('www.gutenberg.org', 'gutenberg.readingroo.ms'),
+      
+      // Alternative file formats
+      originalUrl.replace(/(\d+)-0.txt$/, '$1.txt'),
+      originalUrl.replace(/(\d+).txt$/, '$1-0.txt'),
+      originalUrl.replace(/(\d+).txt$/, '$1-8.txt'),
+      
+      // Try archive.org as last resort
+      `https://web.archive.org/web/2023/${originalUrl}`
+    ];
+  };
+
+  // Try original URL with retries
+  while (currentRetry < MAX_RETRIES) {
+    const result = await tryFetch(url);
+    if (result.success) {
+      return res.status(200).send(result.data);
+    }
+    
+    currentRetry++;
+    
+    if (currentRetry < MAX_RETRIES) {
+      // Wait with exponential backoff before retrying
+      await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, currentRetry)));
+    }
+  }
+
+  // If original URL failed, try alternatives
+  const alternativeUrls = getAlternativeUrls(url);
+  
+  for (const altUrl of alternativeUrls) {
+    const result = await tryFetch(altUrl);
+    if (result.success) {
+      return res.status(200).send(result.data);
+    }
+  }
+
+  // If all attempts failed
+  return res.status(503).json({
+    success: false,
+    message: "Unable to fetch content after multiple attempts",
+    error: lastError?.message || "Unknown error"
+  });
+};
+
 
 module.exports = {
   fetchBooksFromGutendex,
   getBookById,
-  fetchBookContent,
+  fetchContent,
+  fetchContentRobust
 };

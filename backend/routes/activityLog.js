@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const ActivityLog = require("../models/activityLog");  // Assuming you have this model
 
-// Example route for getting activity logs
+// route for getting activity logs
 router.get("/activity-log", async (req, res) => {
     try {
         const logs = await ActivityLog.find();  // Fetching all logs from the ActivityLog model

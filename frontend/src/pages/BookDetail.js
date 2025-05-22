@@ -265,11 +265,17 @@ console.log('Book URL:', book?.url || 'No URL available');
   };
 
   const handleEditReview = (reviewId) => {
-    const reviewToEdit = reviews.find((r) => r._id === reviewId);
-    setEditReviewId(reviewId);
-    setEditComment(reviewToEdit.comment);
-    setEditRating(reviewToEdit.rating);
-  };
+  const reviewToEdit = reviews.find((r) => r._id === reviewId);
+  console.log("Matched review:", reviewToEdit);
+  if (!reviewToEdit) {
+    console.error("No review found with ID:", reviewId);
+    return;
+  }
+  setEditReviewId(reviewId);
+  setEditComment(reviewToEdit.comment);
+  setEditRating(reviewToEdit.rating);
+};
+
 
   const handleUpdateReview = async (e) => {
     e.preventDefault();

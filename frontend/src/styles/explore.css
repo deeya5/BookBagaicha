@@ -128,6 +128,31 @@ body {
   padding: 0 20px;
 }
 
+.filter-actions {
+  margin-top: 20px;
+  padding: 0 15px 20px;
+}
+
+.apply-filters-button {
+  background-color: #4CAF50; /* Green background */
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+  font-size: 16px;
+  margin: 0 auto;
+  cursor: pointer;
+  border-radius: 4px;
+  width: 100%;
+  transition: background-color 0.3s;
+}
+
+.apply-filters-button:hover {
+  background-color: #45a049; /* Darker green on hover */
+}
+
 .explore-title {
   font-size: 2rem;
   margin-bottom: 20px;

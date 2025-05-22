@@ -1,3 +1,4 @@
+//admincontroller
 const User = require("../models/user");
 const Book = require("../models/book"); 
 const Genre = require("../models/genre"); 
@@ -6,7 +7,6 @@ const Review = require("../models/review");
 const mongoose = require("mongoose");
 
 // Approve a book
-// In admin.controller.js
 exports.approveBook = async (req, res) => {
   try {
     const book = await Book.findById(req.params.id);

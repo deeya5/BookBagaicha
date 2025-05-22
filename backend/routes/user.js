@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 const { authenticateToken } = require("./userAuth");
 const logActivity = require("../controllers/activityLog");
 const authorizePermissions = require("../middleware/authorizePermissions");
-const rolesPermissions = require("../config/permissions");
+const assignPermissions = require("../config/permissions");
 
 // Updated Signup Route
 router.post("/sign-up", async (req, res) => {
@@ -38,12 +38,18 @@ router.post("/sign-up", async (req, res) => {
             email,
             password: hashPass,
             role,
-            permissions: Object.keys(rolesPermissions[role] || {}).flatMap(key => rolesPermissions[role][key])
         });
         await newUser.save();
 
         // Generate token just like in sign-in route
-        const authClaims = { id: newUser.id, username: newUser.username, role: newUser.role };
+        const authClaims = {
+        id: newUser.id,
+        username: newUser.username,
+        role: newUser.role,
+        permissions: newUser.permissions
+        };
+
+
         const token = jwt.sign(authClaims, "bookbagaicha5", { expiresIn: "30d" });
 
         await logActivity("User signed up", newUser._id, `Email: ${email}`);
@@ -62,22 +68,33 @@ router.post("/sign-up", async (req, res) => {
     }
 });
 
-// Sign In
 router.post("/sign-in", async (req, res) => {
     try {
+        console.log("Received body:", req.body); // 🟡 Add this line to debug
+
         const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ message: "Email and password are required" });
+        }
 
         const existingUser = await User.findOne({ email });
         if (!existingUser) {
-            return res.status(400).json({ message: "Invalid credentials" });
+            return res.status(400).json({ message: "Invalid credentials - user not found" });
         }
 
         const isPasswordValid = await bcrypt.compare(password, existingUser.password);
         if (!isPasswordValid) {
-            return res.status(400).json({ message: "Invalid credentials" });
+            return res.status(400).json({ message: "Invalid credentials - password mismatch" });
         }
 
-        const authClaims = { id: existingUser.id, username: existingUser.username, role: existingUser.role };
+        const authClaims = {
+            id: existingUser.id,
+            username: existingUser.username,
+            role: existingUser.role,
+            permissions: existingUser.permissions
+        };
+
         const token = jwt.sign(authClaims, "bookbagaicha5", { expiresIn: "30d" });
 
         await logActivity("User logged in", existingUser._id, `Email: ${email}`);
@@ -111,7 +128,7 @@ router.put("/profile", authenticateToken, async (req, res) => {
     try {
         const { username, email, avatar } = req.body;
 
-        // ✅ Log the incoming data to confirm avatar is being sent
+        // Log the incoming data to confirm avatar is being sent
         console.log("Updating user with data:", { username, email, avatar });
 
         const userId = req.user.id;
@@ -163,7 +180,7 @@ router.get("/users", authenticateToken, authorizePermissions("manageUsers"), asy
 });
 
 // Admin: Get total users
-router.get("/get-total-users", authenticateToken, authorizePermissions("manageUsers"), async (req, res) => {
+router.get("/get-total-users",authenticateToken, authorizePermissions("users"), async (req, res) => {
     try {
         const userCount = await User.countDocuments();
         res.status(200).json({ totalUsers: userCount });

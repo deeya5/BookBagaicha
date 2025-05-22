@@ -79,6 +79,24 @@ router.get("/library", authenticateToken, async (req, res) => {
   }
 });
 
+// Delete a book from user's library
+router.delete("/:id", authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+  const entryId = req.params.id;
+
+  try {
+    const deletedEntry = await Library.findOneAndDelete({ _id: entryId, user: userId });
+
+    if (!deletedEntry) {
+      return res.status(404).json({ message: "Library entry not found" });
+    }
+
+    res.status(200).json({ message: "Book removed from library" });
+  } catch (error) {
+    console.error("Library delete error:", error);
+    res.status(500).json({ message: "Server error while deleting from library" });
+  }
+});
 
 
 module.exports = router;

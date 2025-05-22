@@ -1,3 +1,4 @@
+//userside
 const router = require("express").Router();
 const User = require("../models/user");
 const jwt = require("jsonwebtoken");
@@ -7,9 +8,9 @@ const path = require("path");
 const Book = require("../models/book");
 const { authenticateToken } = require("./userAuth");
 const Genre = require("../models/genre");
-const { fetchBooksFromGutendex, getBookById, fetchBookContent} = require("../controllers/bookController"); // importing function
+const { fetchBooksFromGutendex, getBookById, fetchContent} = require("../controllers/bookController"); // importing function
 const fs = require('fs');
-
+const authorizePermissions = require("../middleware/authorizePermissions");
 
 // Add book by admin
 router.post("/add-book", authenticateToken, async (req, res) => {
@@ -82,7 +83,7 @@ router.delete("/delete-book", authenticateToken, async (req, res) => {
 });
 
 // Get all books
-router.get("/get-all-books", authenticateToken, async (req, res) => {
+router.get("/get-all-books", authenticateToken, authorizePermissions("dashboard"), async (req, res) => {
   try {
     const books = await Book.find().sort({ createdAt: -1 }).populate("genre");
     return res.json({ status: "Success", data: books });
@@ -139,7 +140,7 @@ router.get("/uploaded-books", async (req, res) => {
 // Get books from Gutendex API
 router.get("/get-books-from-gutendex", fetchBooksFromGutendex);
 router.get("/get-book-by-id/:id", authenticateToken, getBookById);
-router.get("/fetch-content", fetchBookContent);
+router.get("/fetch-content", fetchContent);
 // router.get('/fetch-content', bookController.fetchBookContent);
 
 // Search for books by title

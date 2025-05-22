@@ -45,6 +45,20 @@ const bookSchema = new mongoose.Schema(
       required: true,
     },
 
+    //for gutendex
+    gutendexId: {
+      type: Number,
+      unique: true,
+      sparse: true, // Allows null for user-uploaded books
+    },
+    formats: {
+      type: Object,
+    },
+    source: {
+      type: String,
+      enum: ["user", "gutendex"],
+      default: "user",
+    },
   },
   { timestamps: true }
 );

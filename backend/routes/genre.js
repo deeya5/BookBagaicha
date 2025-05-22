@@ -1,6 +1,8 @@
 const router = require("express").Router();
 const Genre = require("../models/genre");
 const { authenticateToken } = require("./userAuth");
+const authorizePermissions = require("../middleware/authorizePermissions");
+
 
 // Get all genres
 router.get("/get-all-genres", authenticateToken, async (req, res) => {
@@ -13,7 +15,7 @@ router.get("/get-all-genres", authenticateToken, async (req, res) => {
 });
 
 // Get all book count
-router.get("/get-total-genres", async (req, res) => {
+router.get("/get-total-genres",authenticateToken, authorizePermissions("genre"), async (req, res) => {
   try {
     const genreCount = await Genre.countDocuments();
     res.status(200).json({ totalGenres: genreCount });

@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema({
   username: {
@@ -12,12 +13,12 @@ const userSchema = new mongoose.Schema({
     unique: true,
   },
   password: {
-  type: String,
-  required: function () {
-    return !this.googleId; // only require password if not using Google login
-  }
-},
- googleId: {
+    type: String,
+    required: function () {
+      return !this.googleId; // only require password if not using Google login
+    },
+  },
+  googleId: {
     type: String,
   },
   avatar: {
@@ -30,7 +31,7 @@ const userSchema = new mongoose.Schema({
     enum: ["user", "author", "admin_user", "admin_book", "super_admin"],
   },
   permissions: {
-    type: [String], 
+    type: [String],
     default: [],
   },
   favourites: {
@@ -42,5 +43,6 @@ const userSchema = new mongoose.Schema({
     ref: "books",
   },
 });
+
 
 module.exports = mongoose.model("User", userSchema);
